@@ -1,20 +1,12 @@
-// /src/config/db.js
-
-const sequelize = require("./sequelize");
-const db = require("../models");
+const sequelize = require('./sequelize');
 
 (async () => {
   try {
     await sequelize.authenticate();
-    console.log("✅ Connected to Aiven MySQL (SSL enabled)");
+    console.log('Connected to MySQL');
   } catch (err) {
-    console.error("❌ DB Connection Error:", err.message);
+    console.error('DB Error:', err.message);
   }
 })();
 
-module.exports = {
-  sequelize,
-  db,
-};
-
-
+module.exports = { sequelize };
