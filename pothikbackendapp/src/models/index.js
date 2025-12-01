@@ -1,3 +1,5 @@
+const { Sequelize } = require("sequelize");
+const { sequelize } = require("../config/db");
 
 const Destination = require("./destination.model");
 const Spot = require("./spot.model");
