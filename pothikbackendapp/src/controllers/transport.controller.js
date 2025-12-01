@@ -29,7 +29,7 @@ exports.createTransport = async (req, res) => {
 exports.getAllTransports = async (req, res) => {
   try {
     const transports = await Transport.findAll({
-      include: [{ model: User, attributes: ["user_id", "name", "email"] }],
+      include: [{ model: User, attributes: ["user_id", "full_name", "email"] }],
     });
 
     return res.json({ success: true, transports });
@@ -48,7 +48,7 @@ exports.getTransportById = async (req, res) => {
 
     const transport = await Transport.findByPk(id, {
       include: [
-        { model: User, attributes: ["user_id", "name"] },
+        { model: User, attributes: ["user_id", "full_name"] },
         { model: TransportVehicle },
       ],
     });
