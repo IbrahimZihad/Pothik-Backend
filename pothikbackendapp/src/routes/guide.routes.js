@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const guideController = require("../controllers/guideController");
+const guideController = require("../controllers/guide.controller.js");
 
 /* ------------------------ GUIDE ROUTES ------------------------ */
 router.get("/guides", guideController.getGuides);
