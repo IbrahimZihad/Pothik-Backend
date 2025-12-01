@@ -4,26 +4,32 @@ const express = require("express");
 
 const router = express.Router();
 
-// Directory of this file
+// Path of this folder
 const routesPath = __dirname;
 
-// Read all files in this directory
-fs.readdirSync(routesPath)
-  .filter((file) => {
-    // Exclude this index.js file
-    return (
-      file !== "index.js" &&
-      file.endsWith(".js")
+// Read all files ending with .routes.js
+const routeFiles = fs.readdirSync(routesPath).filter((file) =>
+  file.endsWith(".routes.js")
+);
+
+routeFiles.forEach((file) => {
+  const fullPath = path.join(routesPath, file);
+  const route = require(fullPath);
+
+  // Validate export
+  if (typeof route !== "function") {
+    console.error(
+      `❌ ERROR: '${file}' does not export an Express router. Skipping this file.`
     );
-  })
-  .forEach((file) => {
-    const route = require(path.join(routesPath, file));
+    return;
+  }
 
-    // Convert file name to route path
-    // Example: packages.routes.js → /packages
-    const routeName = "/" + file.replace(".routes.js", "").replace(".js", "");
+  // Build route name from file → Example: users.routes.js → /users
+  const routeName = "/" + file.replace(".routes.js", "");
 
-    router.use(routeName, route);
-  });
+  console.log(`✔ Loaded route: ${routeName} from ${file}`);
+
+  router.use(routeName, route);
+});
 
 module.exports = router;
