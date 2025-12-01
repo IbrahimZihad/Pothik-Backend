@@ -1,4 +1,4 @@
-const { Sequelize } = require("sequelize");
+
 const { sequelize } = require("../config/db");
 
 const Destination = require("./destination.model");
@@ -14,4 +14,4 @@ Spot.belongsTo(Destination, {
   as: "destination",
 });
 
-module.exports = { Destination, Spot };
+module.exports = {sequelize, Destination, Spot };
