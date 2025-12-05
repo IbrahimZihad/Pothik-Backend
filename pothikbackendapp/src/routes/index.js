@@ -16,14 +16,13 @@ fs.readdirSync(routesPath)
 
     // Validate export
     if (typeof route !== "function") {
-      console.error(`❌ ERROR: ${file} does NOT export an Express router. Skipping.`);
+      console.error(`ERROR: ${file} does NOT export an Express router. Skipping.`);
       return;
     }
 
     // Convert "user.routes.js" → "/user"
     const routeName = "/" + file.replace(".routes.js", "");
 
-    console.log(`✔ Route loaded: ${routeName}`);
     router.use(routeName, route);
   });
 
