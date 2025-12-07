@@ -1,66 +1,31 @@
+/**
+ * Title : Booking Model
+ * -----------------------------
+ * Description : Stores main booking information.
+ *
+ * Table: bookings
+ * 
+ * Build by : Md.Foysal Hossain Khan
+ */
+
 module.exports = (sequelize, DataTypes) => {
   const Booking = sequelize.define(
     "Booking",
     {
-      booking_id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-      },
+      booking_id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
 
-      user_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-      },
+      user_id: { type: DataTypes.INTEGER, allowNull: false }, // customer/user
+      package_id: { type: DataTypes.INTEGER, allowNull: true }, // optional for custom booking
 
-      package_type: {
-        type: DataTypes.ENUM("prebuilt", "custom"),
-        allowNull: true,
-      },
+      total_price: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+      discount: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0.0 },
 
-      package_id: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-      },
-
-      session_id: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-      },
-
-      total_price: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false,
-      },
-
-      coupon_id: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-      },
-
-      discounted_price: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: true,
-      },
-
-      loyalty_points_used: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
-      },
-
-      loyalty_points_earned: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
-      },
+      journey_date: { type: DataTypes.DATE, allowNull: false },
+      booking_date: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
 
       status: {
         type: DataTypes.ENUM("pending", "confirmed", "cancelled", "completed"),
         defaultValue: "pending",
-      },
-
-      created_at: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
       },
     },
     {
@@ -71,9 +36,12 @@ module.exports = (sequelize, DataTypes) => {
 
   Booking.associate = (models) => {
     Booking.belongsTo(models.User, { foreignKey: "user_id" });
-    Booking.belongsTo(models.Package, { foreignKey: "package_id", constraints: false });
-    Booking.belongsTo(models.Session, { foreignKey: "session_id", constraints: false });
-    Booking.belongsTo(models.Coupon, { foreignKey: "coupon_id", constraints: false });
+    Booking.belongsTo(models.Package, { foreignKey: "package_id" });
+
+    // Relations with service tables
+    Booking.hasMany(models.BookingServiceGuide, { foreignKey: "booking_id" });
+    Booking.hasMany(models.BookingServiceHotel, { foreignKey: "booking_id" });
+    Booking.hasMany(models.BookingServiceTransport, { foreignKey: "booking_id" });
   };
 
   return Booking;
