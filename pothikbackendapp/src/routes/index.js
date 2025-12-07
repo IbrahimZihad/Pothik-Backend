@@ -23,6 +23,7 @@ fs.readdirSync(routesPath)
     // Convert "user.routes.js" → "/user"
     const routeName = "/" + file.replace(".routes.js", "");
 
+    console.log(`Loading route: ${routeName} from ${file}`);
     router.use(routeName, route);
   });
 
