@@ -65,6 +65,18 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: "owner_id",
       as: "guides",
     });
+
+    // USER → BOOKINGS (CUSTOMER)
+    User.hasMany(models.Booking, {
+      foreignKey: "user_id",
+      as: "bookings",
+    });
+
+    // USER → REVIEWS (REVIEWER)
+    User.hasMany(models.Review, {
+      foreignKey: "user_id",
+      as: "reviews",
+    });
   };
 
   return User;

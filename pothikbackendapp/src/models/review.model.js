@@ -38,5 +38,44 @@ module.exports = (sequelize, DataTypes) => {
         timestamps: false,
     });
 
+    // -----------------------------
+    // 🔗 Define Associations Here
+    // -----------------------------
+    Review.associate = (models) => {
+        // REVIEW → USER
+        Review.belongsTo(models.User, {
+            foreignKey: "user_id",
+            as: "user",
+        });
+
+        // REVIEW → HOTEL (POLYMORPHIC)
+        Review.belongsTo(models.Hotel, {
+            foreignKey: "service_id",
+            constraints: false,
+            as: "hotel",
+        });
+
+        // REVIEW → TRANSPORT (POLYMORPHIC)
+        Review.belongsTo(models.Transport, {
+            foreignKey: "service_id",
+            constraints: false,
+            as: "transport",
+        });
+
+        // REVIEW → GUIDE (POLYMORPHIC)
+        Review.belongsTo(models.Guide, {
+            foreignKey: "service_id",
+            constraints: false,
+            as: "guide",
+        });
+
+        // REVIEW → PACKAGE (POLYMORPHIC)
+        Review.belongsTo(models.Package, {
+            foreignKey: "service_id",
+            constraints: false,
+            as: "package",
+        });
+    };
+
     return Review;
 };

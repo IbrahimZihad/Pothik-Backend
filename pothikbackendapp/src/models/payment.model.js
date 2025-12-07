@@ -34,5 +34,16 @@ module.exports = (sequelize, DataTypes) => {
     timestamps: false,
   });
 
+  // -----------------------------
+  // 🔗 Define Associations Here
+  // -----------------------------
+  Payment.associate = (models) => {
+    // PAYMENT → BOOKING
+    Payment.belongsTo(models.Booking, {
+      foreignKey: "booking_id",
+      as: "booking",
+    });
+  };
+
   return Payment;
 };
