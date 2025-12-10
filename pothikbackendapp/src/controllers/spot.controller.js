@@ -1,16 +1,17 @@
 /**
- * Tittle: Spot Controller
+ * Title: Spot Controller
  * -------------------------
  * Description: Controller functions for managing spots associated with destinations.
  *
- * Table: destinations, spots
+ * Table: spots, destinations
  * 
- * Build by: Asif Mia
- * 
+ * Built by: Asif Mia
  * Date: 10 December 2025
  */
 
+const { Spot, Destination } = require("../models");
 
+// Utility: convert name to slug
 const toSlug = (text) =>
   text
     .toLowerCase()
@@ -18,11 +19,8 @@ const toSlug = (text) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-
-const { Spot, Destination } = require("../models");
-
 // ============================================================================
-//                                  SPOT CONTROLLERS
+//                               SPOT CONTROLLERS
 // ============================================================================
 
 // -----------------------------------------------------------------------------
@@ -33,6 +31,7 @@ exports.createSpot = async (req, res) => {
     const { destination_id } = req.params;
     const { name, slug, description, image } = req.body;
 
+    // Check if destination exists
     const destination = await Destination.findByPk(destination_id);
     if (!destination) {
       return res.status(404).json({ success: false, message: "Destination not found" });
@@ -41,7 +40,7 @@ exports.createSpot = async (req, res) => {
     const spot = await Spot.create({
       destination_id,
       name,
-      slug,
+      slug: slug || toSlug(name),
       description,
       image,
     });
@@ -54,11 +53,32 @@ exports.createSpot = async (req, res) => {
 };
 
 // -----------------------------------------------------------------------------
-// GET ALL SPOTS UNDER A DESTINATION
+// GET ALL SPOTS
+// -----------------------------------------------------------------------------
+exports.getAllSpots = async (req, res) => {
+  try {
+    const spots = await Spot.findAll({
+      include: [{ model: Destination, as: "destination" }],
+    });
+
+    return res.json({ success: true, spots });
+  } catch (err) {
+    console.error("Error fetching all spots:", err);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+// -----------------------------------------------------------------------------
+// GET ALL SPOTS OF A SPECIFIC DESTINATION
 // -----------------------------------------------------------------------------
 exports.getSpotsByDestination = async (req, res) => {
   try {
     const { destination_id } = req.params;
+
+    const destination = await Destination.findByPk(destination_id);
+    if (!destination) {
+      return res.status(404).json({ success: false, message: "Destination not found" });
+    }
 
     const spots = await Spot.findAll({
       where: { destination_id },
@@ -72,7 +92,7 @@ exports.getSpotsByDestination = async (req, res) => {
 };
 
 // -----------------------------------------------------------------------------
-// GET SINGLE SPOT
+// GET SINGLE SPOT BY ID
 // -----------------------------------------------------------------------------
 exports.getSpotById = async (req, res) => {
   try {
@@ -88,11 +108,14 @@ exports.getSpotById = async (req, res) => {
 
     return res.json({ success: true, spot });
   } catch (err) {
-    console.error("Error fetching spot:", err);
+    console.error("Error fetching spot by ID:", err);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
 
+// -----------------------------------------------------------------------------
+// GET SINGLE SPOT BY NAME (slug)
+// -----------------------------------------------------------------------------
 exports.getSpotByName = async (req, res) => {
   try {
     const { name } = req.params;
@@ -114,13 +137,18 @@ exports.getSpotByName = async (req, res) => {
   }
 };
 
-
 // -----------------------------------------------------------------------------
 // UPDATE SPOT
 // -----------------------------------------------------------------------------
 exports.updateSpot = async (req, res) => {
   try {
     const { spot_id } = req.params;
+    const { name } = req.body;
+
+    // Auto-generate slug if name is updated
+    if (name && !req.body.slug) {
+      req.body.slug = toSlug(name);
+    }
 
     const [updated] = await Spot.update(req.body, {
       where: { spot_id },
