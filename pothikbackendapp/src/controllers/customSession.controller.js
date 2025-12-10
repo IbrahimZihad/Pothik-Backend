@@ -1,9 +1,7 @@
 /**
- * Title : BookingHotel Model
+ * Title : customSession controller
  * -----------------------------
- * Description : Stores hotel + room selections for a booking.
- *
- * Table : booking_services_hotel
+ * Table : custom_sessions
  * 
  * Build by : Md. Foysal Hossain Khan
  */
