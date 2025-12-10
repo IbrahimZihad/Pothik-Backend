@@ -8,7 +8,7 @@ const transportController = require("../controllers/transport.controller.js");
 // ============================================================================
 
 // CREATE transport
-router.post("/transports", transportController.createTransport);
+router.post("/createTransports", transportController.createTransport);
 
 // GET all transports
 router.get("/transports", transportController.getAllTransports);
