@@ -15,10 +15,10 @@ app.get('/', (req, res) => {
         message: 'Pothik Backend API',
         version: '1.0.0',
         endpoints: {
-            register: 'POST /api/users/register',
-            login: 'POST /api/users/login',
-            health: 'GET /api/health'
-        }
+            register: 'POST /api/auth/register',
+            login: 'POST /api/auth/login',
+            verify: 'GET /api/auth/verify'
+}
     });
 });
 

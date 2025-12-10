@@ -1,14 +1,20 @@
+// src/controllers/admin.controller.js
+
 const { Admin } = require('../models');
+const bcrypt = require('bcrypt');
 
 // Create new admin
 exports.createAdmin = async (req, res) => {
   try {
-    const { name, email, password, role, status } = req.body;
+    const { full_name, email, password, role, status } = req.body;
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const admin = await Admin.create({
-      name,
+      full_name,
       email,
-      password,
+      password: hashedPassword,
       role: role || 'admin',
       status: status || 'active'
     });
@@ -81,6 +87,11 @@ exports.updateAdmin = async (req, res) => {
         success: false,
         error: 'Admin not found'
       });
+    }
+
+    // If password is being updated, hash it
+    if (req.body.password) {
+      req.body.password = await bcrypt.hash(req.body.password, 10);
     }
 
     await admin.update(req.body);
