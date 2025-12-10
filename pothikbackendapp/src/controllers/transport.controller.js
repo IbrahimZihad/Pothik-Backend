@@ -5,7 +5,7 @@ const { Transport, TransportVehicle, User } = require("../models");
 // -----------------------------------------------------------------------------
 exports.createTransport = async (req, res) => {
   try {
-    const { owner_id, vehicle_type, model, total_vehicles, capacity, price_per_day } = req.body;
+     const { owner_id, vehicle_type, model, total_vehicles, capacity, price_per_day } = req.body;
 
     const transport = await Transport.create({
       owner_id,

@@ -2,8 +2,13 @@ const express = require('express');
 const routes = require('./routes');
 const app = express();
 
+const cors = require('cors');
+const morgan = require('morgan');
+
+
 // Middleware
-app.use(express.json());
+app.use([cors(), morgan('dev'), express.json()]);
+
 app.use(express.urlencoded({ extended: true }));
 
 // API Routes
