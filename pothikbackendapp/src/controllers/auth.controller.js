@@ -5,13 +5,14 @@ exports.register = async (req, res) => {
     try {
         const result = await authService.registerUser(req.body);
 
-        res.status(201).json({
+        return res.status(201).json({
             success: true,
             message: 'User registered successfully',
             data: result
         });
     } catch (err) {
-        res.status(err.message.includes('already exists') ? 400 : 500).json({
+        const statusCode = err.message.includes('already exists') ? 400 : 500;
+        return res.status(statusCode).json({
             success: false,
             error: err.message
         });
@@ -22,15 +23,24 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email and password are required'
+            });
+        }
+
         const result = await authService.loginUser(email, password);
 
-        res.json({
+        return res.json({
             success: true,
             message: 'Login successful',
             data: result
         });
     } catch (err) {
-        res.status(err.message.includes('Invalid') ? 401 : 500).json({
+        const statusCode = err.message.includes('Invalid') ? 401 : 500;
+        return res.status(statusCode).json({
             success: false,
             error: err.message
         });
@@ -40,15 +50,23 @@ exports.login = async (req, res) => {
 // Verify token
 exports.verifyToken = async (req, res) => {
     try {
-        const token = req.headers.authorization?.split(' ')[1];
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+            return res.status(401).json({
+                success: false,
+                error: 'Authorization header missing'
+            });
+        }
+
+        const token = authHeader.split(' ')[1];
         const result = await authService.verifyUserToken(token);
 
-        res.json({
+        return res.json({
             success: true,
             data: result
         });
     } catch (err) {
-        res.status(401).json({
+        return res.status(401).json({
             success: false,
             error: err.message
         });
