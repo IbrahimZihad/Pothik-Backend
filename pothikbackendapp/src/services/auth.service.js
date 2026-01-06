@@ -173,3 +173,53 @@ exports.hashPassword = async (password) => {
 exports.verifyPassword = async (password, hashedPassword) => {
     return await bcrypt.compare(password, hashedPassword);
 };
+
+// Request password reset - sends OTP to email
+exports.requestPasswordReset = async (email) => {
+    const emailService = require('./email.service');
+
+    // Find user by email
+    const user = await User.findOne({ where: { email } });
+
+    if (!user) {
+        throw new Error('No account found with this email address');
+    }
+
+    // Check if user uses Google OAuth
+    if (user.auth_provider === 'google' && !user.password_hash) {
+        throw new Error('This account uses Google login. Please sign in with Google instead.');
+    }
+
+    // Send OTP to email
+    await emailService.sendPasswordResetOTP(email);
+
+    return { message: 'OTP sent to your email address' };
+};
+
+// Reset password with OTP verification
+exports.resetPassword = async (email, otp, newPassword) => {
+    const emailService = require('./email.service');
+
+    // Verify OTP first
+    emailService.verifyOTP(email, otp);
+
+    // Validate new password
+    if (!newPassword || newPassword.length < 6) {
+        throw new Error('Password must be at least 6 characters long');
+    }
+
+    // Hash new password
+    const password_hash = await bcrypt.hash(newPassword, 10);
+
+    // Update user's password
+    const [updatedRows] = await User.update(
+        { password_hash },
+        { where: { email } }
+    );
+
+    if (updatedRows === 0) {
+        throw new Error('Failed to update password. User not found.');
+    }
+
+    return { message: 'Password reset successful. You can now login with your new password.' };
+};

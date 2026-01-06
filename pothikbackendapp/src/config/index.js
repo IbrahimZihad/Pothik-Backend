@@ -17,5 +17,9 @@ module.exports = {
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "7d",
 
   SERVER_PORT: process.env.SERVER_PORT || 5000,
+
+  // Email configuration for password reset
+  EMAIL_USER: process.env.EMAIL_USER,
+  EMAIL_PASSWORD: process.env.EMAIL_PASSWORD,
 };
 

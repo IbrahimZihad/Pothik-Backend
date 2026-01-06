@@ -101,3 +101,56 @@ exports.googleLogin = async (req, res) => {
         });
     }
 };
+
+// Request password reset OTP
+exports.forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email is required'
+            });
+        }
+
+        const result = await authService.requestPasswordReset(email);
+
+        return res.json({
+            success: true,
+            message: result.message
+        });
+    } catch (err) {
+        const statusCode = err.message.includes('No account') ? 404 : 400;
+        return res.status(statusCode).json({
+            success: false,
+            error: err.message
+        });
+    }
+};
+
+// Reset password with OTP
+exports.resetPassword = async (req, res) => {
+    try {
+        const { email, otp, newPassword } = req.body;
+
+        if (!email || !otp || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email, OTP, and new password are required'
+            });
+        }
+
+        const result = await authService.resetPassword(email, otp, newPassword);
+
+        return res.json({
+            success: true,
+            message: result.message
+        });
+    } catch (err) {
+        return res.status(400).json({
+            success: false,
+            error: err.message
+        });
+    }
+};
