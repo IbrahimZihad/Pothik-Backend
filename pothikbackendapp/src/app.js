@@ -6,8 +6,10 @@ const cors = require('cors');
 const morgan = require('morgan');
 
 
-// Middleware
-app.use([cors(), morgan('dev'), express.json()]);
+app.use([cors({
+    origin: 'http://localhost:5173',  //  frontend URL
+    credentials: true
+}), morgan('dev'), express.json()]);
 
 app.use(express.urlencoded({ extended: true }));
 
