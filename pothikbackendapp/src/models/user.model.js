@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       password_hash: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true, // Nullable for OAuth users (Google login)
       },
       phone: {
         type: DataTypes.STRING,
@@ -28,6 +28,15 @@ module.exports = (sequelize, DataTypes) => {
       role: {
         type: DataTypes.ENUM("customer", "owner", "admin"),
         defaultValue: "customer",
+      },
+      auth_provider: {
+        type: DataTypes.ENUM("local", "google"),
+        defaultValue: "local",
+      },
+      firebase_uid: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        unique: true,
       },
       loyalty_points: {
         type: DataTypes.INTEGER,

@@ -72,3 +72,32 @@ exports.verifyToken = async (req, res) => {
         });
     }
 };
+
+// Google OAuth login
+exports.googleLogin = async (req, res) => {
+    try {
+        const { idToken } = req.body;
+
+        if (!idToken) {
+            return res.status(400).json({
+                success: false,
+                error: 'Firebase ID token is required'
+            });
+        }
+
+        const result = await authService.googleLoginUser(idToken);
+
+        return res.json({
+            success: true,
+            message: 'Google login successful',
+            data: result
+        });
+    } catch (err) {
+        console.error('Google login error:', err.message);
+        const statusCode = err.message.includes('Invalid') ? 401 : 500;
+        return res.status(statusCode).json({
+            success: false,
+            error: err.message
+        });
+    }
+};

@@ -2,6 +2,7 @@ const { User } = require('../models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../config');
+const admin = require('../config/firebase-admin.config');
 
 // Register new user
 exports.registerUser = async (userData) => {
@@ -23,6 +24,7 @@ exports.registerUser = async (userData) => {
         password_hash,
         phone,
         role: role || 'customer',
+        auth_provider: 'local',
     });
 
     // Generate token
@@ -48,6 +50,11 @@ exports.loginUser = async (email, password) => {
         throw new Error('Invalid email or password');
     }
 
+    // Check if user is OAuth user (no password)
+    if (user.auth_provider !== 'local' || !user.password_hash) {
+        throw new Error('Please sign in with Google');
+    }
+
     // Verify password
     const isValidPassword = await bcrypt.compare(password, user.password_hash);
     if (!isValidPassword) {
@@ -68,6 +75,63 @@ exports.loginUser = async (email, password) => {
         },
         token
     };
+};
+
+// Google OAuth login
+exports.googleLoginUser = async (idToken) => {
+    try {
+        // Verify Firebase ID token
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        const { uid, email, name, picture } = decodedToken;
+
+        if (!email) {
+            throw new Error('Email not provided by Google');
+        }
+
+        // Check if user exists by firebase_uid or email
+        let user = await User.findOne({
+            where: { firebase_uid: uid }
+        });
+
+        if (!user) {
+            // Check if user exists by email (might have registered with email/password)
+            user = await User.findOne({ where: { email } });
+
+            if (user) {
+                // Link existing account with Google
+                user.firebase_uid = uid;
+                user.auth_provider = 'google';
+                await user.save();
+            } else {
+                // Create new user
+                user = await User.create({
+                    full_name: name || email.split('@')[0],
+                    email,
+                    firebase_uid: uid,
+                    auth_provider: 'google',
+                    role: 'customer',
+                });
+            }
+        }
+
+        // Generate JWT token
+        const token = this.generateToken(user);
+
+        return {
+            user: {
+                user_id: user.user_id,
+                full_name: user.full_name,
+                email: user.email,
+                phone: user.phone,
+                role: user.role,
+                loyalty_points: user.loyalty_points || 0,
+            },
+            token
+        };
+    } catch (error) {
+        console.error('Firebase token verification error:', error);
+        throw new Error('Invalid Google authentication token');
+    }
 };
 
 // Verify token and get user
