@@ -19,12 +19,12 @@ router.get("/slug/:slug", blogController.getBlogBySlug);
 router.get("/user/:user_id", blogController.getBlogsByUser);
 
 // GET single blog by ID
-router.get("/:id", blogController.getBlogById);
+router.get("/blogs/:id/blog", blogController.getBlogById);
 
 // UPDATE blog
-router.put("/:id", blogController.updateBlog);
+router.put("/blogs/:id", blogController.updateBlog);
 
 // DELETE blog
-router.delete("/:id", blogController.deleteBlog);
+router.delete("/blogs/:id", blogController.deleteBlog);
 
 module.exports = router;
