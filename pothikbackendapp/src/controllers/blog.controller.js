@@ -6,82 +6,48 @@ const path = require("path");
 exports.createBlog = async (req, res) => {
   try {
     console.log("=== CREATE BLOG REQUEST ===");
-    console.log("Body:", req.body);
-    console.log("File:", req.file);
+    console.log("req.body:", req.body);
+    console.log("req.file:", req.file);
+    console.log("req.user:", req.user);
 
-    const { title, slug, content } = req.body;
-    let { user_id } = req.body;
+    const title = req.body.title || "";
+    const slug = req.body.slug || "";
+    const content = req.body.content || "";
+    const user_id = req.user.user_id; // from verifyToken
 
-    // Validate user_id
-    user_id = parseInt(user_id);
-    if (!user_id || isNaN(user_id)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Valid user_id is required" 
-      });
-    }
-
-    // Validate required fields
     if (!title || !slug || !content) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Title, slug, and content are required" 
+      return res.status(400).json({
+        success: false,
+        message: "Title, slug, and content are required",
       });
     }
 
-    // ✅ Check if image was uploaded (comes from req.file, NOT req.body)
-    if (!req.file) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Image is required" 
-      });
-    }
-
-    // ✅ Get the image path from req.file.path
-    const imagePath = req.file.path.replace(/\\/g, '/');
-
-    console.log("Creating blog with:", { user_id, title, slug, imagePath });
+    const imagePath = req.file ? req.file.path.replace(/\\/g, "/") : null;
 
     const blog = await Blog.create({
       user_id,
       title,
       slug,
       content,
-      image: imagePath, // ✅ Store the file path
+      image: imagePath,
     });
 
-    console.log("✅ Blog created successfully:", blog.blog_id);
-
-    return res.status(201).json({ 
-      success: true, 
+    return res.status(201).json({
+      success: true,
       blog,
-      message: "Blog created successfully"
+      message: "Blog created successfully",
     });
 
   } catch (err) {
-    console.error("❌ ERROR:", err.message);
-    console.error(err.stack);
-    
-    if (err.name === 'SequelizeUniqueConstraintError') {
-      return res.status(400).json({
-        success: false,
-        message: "A blog with this slug already exists"
-      });
-    }
-
-    if (err.name === 'SequelizeForeignKeyConstraintError') {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user_id"
-      });
-    }
-    
-    return res.status(500).json({ 
-      success: false, 
-      message: err.message || "Internal Server Error"
+    console.error("❌ CREATE BLOG ERROR:", err);
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+      stack: err.stack,
     });
   }
 };
+
 
 // -----------------------------------------------------------------------------
 // GET ALL BLOGS

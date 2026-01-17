@@ -12,6 +12,7 @@ const verifyToken = require("../middleware/auth.middleware.js"); // Adjust the i
 router.post(
   "/blogs",
   verifyToken,
+  upload.single("image"),
   blogController.createBlog
 );
 
