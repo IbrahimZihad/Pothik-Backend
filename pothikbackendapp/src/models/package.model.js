@@ -1,4 +1,3 @@
-
 module.exports = (sequelize, DataTypes) => {
   const Package = sequelize.define(
     "Package",
@@ -36,6 +35,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
       },
+      Start_Date: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
     },
     {
       tableName: "packages",
@@ -44,14 +47,12 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   Package.associate = (models) => {
-    // Many-to-Many with Destination
     Package.belongsToMany(models.Destination, {
       through: models.PackageDestination,
       foreignKey: "package_id",
       otherKey: "destination_id",
     });
 
-    // One-to-Many with PackageService
     Package.hasMany(models.PackageService, {
       foreignKey: "package_id",
     });
