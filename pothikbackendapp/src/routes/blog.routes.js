@@ -1,18 +1,18 @@
 const express = require("express");
 const router = express.Router();
 const blogController = require("../controllers/blog.controller.js");
-const upload = require("../middlewares/upload.middleware.js");
-const { verifyToken } = require("../middlewares/auth.middleware.js"); // Adjust the import based on your auth middleware
+const upload = require("../middleware/upload.middleware.js");
+const verifyToken = require("../middleware/auth.middleware.js"); // Adjust the import based on your auth middleware
 
 // -----------------------------------------------------------------------------
 // BLOG ROUTES
 // -----------------------------------------------------------------------------
 
 // CREATE a new blog (with image upload and authentication)
-router.post("/blogs", 
-  verifyToken,                    // 1. Verify user is authenticated
-  upload.single('image'),         // 2. Handle image upload
-  blogController.createBlog       // 3. Create blog
+router.post(
+  "/blogs",
+  verifyToken,
+  blogController.createBlog
 );
 
 // GET all blogs (public)
