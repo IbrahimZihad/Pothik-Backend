@@ -1,10 +1,19 @@
 const express = require('express');
 const routes = require('./routes');
 const app = express();
-
 const cors = require('cors');
 const morgan = require('morgan');
+const fs = require('fs');
+const path = require('path');
 
+// ✅ CREATE UPLOADS DIRECTORY AUTOMATICALLY
+const uploadDir = path.join(__dirname, '../uploads/blogs');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+  console.log('✅ Upload directory created at:', uploadDir);
+} else {
+  console.log('✅ Upload directory exists at:', uploadDir);
+}
 
 app.use([cors({
     origin: 'http://localhost:5173',  //  frontend URL
@@ -12,6 +21,9 @@ app.use([cors({
 }), morgan('dev'), express.json()]);
 
 app.use(express.urlencoded({ extended: true }));
+
+// ✅ Serve uploaded files statically with absolute path
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // API Routes
 app.use('/api', routes);
@@ -24,8 +36,9 @@ app.get('/', (req, res) => {
         endpoints: {
             register: 'POST /api/auth/register',
             login: 'POST /api/auth/login',
-            verify: 'GET /api/auth/verify'
-}
+            verify: 'GET /api/auth/verify',
+            createBlog: 'POST /api/blog/blogs'
+        }
     });
 });
 
