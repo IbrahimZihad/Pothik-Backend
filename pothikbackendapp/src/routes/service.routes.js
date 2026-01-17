@@ -8,7 +8,7 @@ const packageServiceController = require("../controllers/service.controller.js")
 // ======================
 
 // Add a single service to a package
-router.post("/services", packageServiceController.addServiceToPackage);
+router.post("/add", packageServiceController.addServiceToPackage);
 
 // Remove a service from a package (by relationship ID)
 router.delete("/:id", packageServiceController.removeServiceFromPackage);
