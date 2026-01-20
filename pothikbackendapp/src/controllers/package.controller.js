@@ -41,8 +41,14 @@ exports.createPackage = async (req, res) => {
 };
 
 // Get all packages with optional filters
+// Get all packages with optional filters
 exports.getAllPackages = async (req, res) => {
   try {
+    // Prevent caching completely
+    res.set("Cache-Control", "no-store");
+    res.set("Pragma", "no-cache");
+    res.set("Expires", "0");
+
     const { name, slug } = req.query;
     let where = {};
 
@@ -70,6 +76,7 @@ exports.getAllPackages = async (req, res) => {
     });
   }
 };
+
 
 // Get package by ID
 exports.getPackageById = async (req, res) => {
