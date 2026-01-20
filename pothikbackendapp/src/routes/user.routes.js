@@ -1,7 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const userController = require('../controllers/user.controller');
+const authMiddleware = require('../middleware/auth.middleware');
 
-// User routes will be added here later
-// Auth routes (register, login) are in auth.routes.js
+// Protected routes - require authentication
+router.get('/profile', authMiddleware, userController.getProfile);
+router.put('/profile', authMiddleware, userController.updateProfile);
+router.put('/password', authMiddleware, userController.updatePassword);
 
 module.exports = router;

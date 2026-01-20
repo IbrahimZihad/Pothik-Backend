@@ -42,14 +42,6 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         defaultValue: 0,
       },
-      country: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      street_address: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
       created_at: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,

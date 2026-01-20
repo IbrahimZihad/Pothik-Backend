@@ -3,13 +3,13 @@ const routes = require('./routes');
 const app = express();
 
 const cors = require('cors');
-// const morgan = require('morgan');
+const morgan = require('morgan');
 
 
 app.use([cors({
     origin: 'http://localhost:5173',  //  frontend URL
     credentials: true
-}), express.json()]);
+}), morgan('dev'), express.json()]);
 
 app.use(express.urlencoded({ extended: true }));
 
@@ -25,7 +25,7 @@ app.get('/', (req, res) => {
             register: 'POST /api/auth/register',
             login: 'POST /api/auth/login',
             verify: 'GET /api/auth/verify'
-        }
+}
     });
 });
 

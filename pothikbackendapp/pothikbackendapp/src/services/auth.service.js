@@ -37,8 +37,6 @@ exports.registerUser = async (userData) => {
             email: user.email,
             phone: user.phone,
             role: user.role,
-            country: user.country,
-            street_address: user.street_address,
         },
         token
     };
@@ -74,8 +72,6 @@ exports.loginUser = async (email, password) => {
             phone: user.phone,
             role: user.role,
             loyalty_points: user.loyalty_points,
-            country: user.country,
-            street_address: user.street_address,
         },
         token
     };
@@ -129,8 +125,6 @@ exports.googleLoginUser = async (idToken) => {
                 phone: user.phone,
                 role: user.role,
                 loyalty_points: user.loyalty_points || 0,
-                country: user.country,
-                street_address: user.street_address,
             },
             token
         };
@@ -158,10 +152,6 @@ exports.verifyUserToken = async (token) => {
         full_name: user.full_name,
         email: user.email,
         role: user.role,
-        phone: user.phone,
-        loyalty_points: user.loyalty_points,
-        country: user.country,
-        street_address: user.street_address,
     };
 };
 
