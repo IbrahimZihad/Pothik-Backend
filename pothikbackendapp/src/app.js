@@ -2,13 +2,10 @@ const express = require('express');
 const routes = require('./routes');
 const app = express();
 const cors = require('cors');
-<<<<<<< HEAD
-// const morgan = require('morgan');
-=======
+
 const morgan = require('morgan');
 const fs = require('fs');
 const path = require('path');
->>>>>>> 60dba8ee9da8e58d56001e58b5d8276edcbc2763
 
 // ✅ CREATE UPLOADS DIRECTORY AUTOMATICALLY
 const uploadDir = path.join(__dirname, '../uploads/blogs');
@@ -40,12 +37,9 @@ app.get('/', (req, res) => {
         endpoints: {
             register: 'POST /api/auth/register',
             login: 'POST /api/auth/login',
-<<<<<<< HEAD
-            verify: 'GET /api/auth/verify'
-=======
+
             verify: 'GET /api/auth/verify',
             createBlog: 'POST /api/blog/blogs'
->>>>>>> 60dba8ee9da8e58d56001e58b5d8276edcbc2763
         }
     });
 });
