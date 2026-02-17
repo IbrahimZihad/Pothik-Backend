@@ -2,6 +2,7 @@ const express = require('express');
 const routes = require('./routes');
 const app = express();
 const cors = require('cors');
+
 const morgan = require('morgan');
 const fs = require('fs');
 const path = require('path');
@@ -18,7 +19,7 @@ if (!fs.existsSync(uploadDir)) {
 app.use([cors({
     origin: 'http://localhost:5173',  //  frontend URL
     credentials: true
-}), morgan('dev'), express.json()]);
+}), express.json()]);
 
 app.use(express.urlencoded({ extended: true }));
 
@@ -36,6 +37,7 @@ app.get('/', (req, res) => {
         endpoints: {
             register: 'POST /api/auth/register',
             login: 'POST /api/auth/login',
+
             verify: 'GET /api/auth/verify',
             createBlog: 'POST /api/blog/blogs'
         }

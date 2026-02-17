@@ -3,20 +3,26 @@ module.exports = (sequelize, DataTypes) => {
     "Transport",
     {
       transport_id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-      owner_id: DataTypes.INTEGER,
-      vehicle_type: DataTypes.STRING,
-      model: DataTypes.STRING,
-      total_vehicles: DataTypes.INTEGER,
-      capacity: DataTypes.INTEGER,
-      price_per_day: DataTypes.DECIMAL(10, 2),
+      owner_id: { type: DataTypes.INTEGER, allowNull: false },
+      vehicle_type: { type: DataTypes.STRING, allowNull: false },
+      model: { type: DataTypes.STRING },
+      total_vehicles: { type: DataTypes.INTEGER },
+      capacity: { type: DataTypes.INTEGER },
+      price_per_day: { type: DataTypes.DECIMAL(10, 2) },
     },
-    { tableName: "transports", timestamps: false }
+    {
+      tableName: "transports",
+      timestamps: false,
+    }
   );
 
   Transport.associate = (models) => {
-    Transport.belongsTo(models.User, { foreignKey: "owner_id" });
+    // Transport belongs to an owner (User)
+    Transport.belongsTo(models.User, { foreignKey: "owner_id", as: "User" });
+
+    // Transport has many vehicles
+    Transport.hasMany(models.TransportVehicle, { foreignKey: "transport_id", as: "Vehicles" });
   };
 
   return Transport;
 };
-
