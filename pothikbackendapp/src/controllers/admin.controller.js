@@ -135,3 +135,68 @@ exports.deleteAdmin = async (req, res) => {
     });
   }
 };
+// ================= ADMIN LOGIN =================
+exports.loginAdmin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // validation
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: "Email and password are required"
+      });
+    }
+
+    // find admin in DB
+    const admin = await Admin.findOne({ where: { email } });
+
+    if (!admin) {
+      return res.status(401).json({
+        success: false,
+        error: "Invalid email or password"
+      });
+    }
+
+    // compare password
+    const isMatch = await bcrypt.compare(password, admin.password);
+
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        error: "Invalid email or password"
+      });
+    }
+
+    //  CREATE ADMIN TOKEN (VERY IMPORTANT)
+    const token = jwt.sign(
+      {
+        id: admin.id,
+        email: admin.email,
+        isAdmin: true    // role.middleware.js will check this
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    return res.json({
+      success: true,
+      message: "Admin login successful",
+      data: {
+        admin: {
+          id: admin.id,
+          full_name: admin.full_name,
+          email: admin.email
+        },
+        token
+      }
+    });
+
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+};
+
