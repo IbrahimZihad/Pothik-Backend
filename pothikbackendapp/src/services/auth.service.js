@@ -84,6 +84,11 @@ exports.loginUser = async (email, password) => {
 // Google OAuth login
 exports.googleLoginUser = async (idToken) => {
     try {
+        // Check if Firebase Admin is initialized
+        if (!admin.apps || !admin.apps.length) {
+            throw new Error('Firebase Admin SDK is not initialized. Please add serviceAccountKey.json to the project root.');
+        }
+
         // Verify Firebase ID token
         const decodedToken = await admin.auth().verifyIdToken(idToken);
         const { uid, email, name, picture } = decodedToken;

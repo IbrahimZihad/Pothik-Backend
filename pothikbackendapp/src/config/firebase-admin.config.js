@@ -21,10 +21,9 @@ if (fs.existsSync(serviceAccountPath)) {
     console.warn('⚠️ Google authentication will not work without it.');
     console.warn('⚠️ Please download the service account key from Firebase Console.');
 
-    // Initialize with application default credentials (for development)
-    if (!admin.apps.length) {
-        admin.initializeApp();
-    }
+    // Do NOT initialize without credentials - it causes EPERM errors on Windows
+    // when trying to auto-detect credentials via child process spawning
+    console.warn('⚠️ Firebase Admin SDK NOT initialized. Google auth endpoints will fail.');
 }
 
 module.exports = admin;
