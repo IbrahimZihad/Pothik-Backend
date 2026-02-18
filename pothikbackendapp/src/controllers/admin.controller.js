@@ -1,37 +1,44 @@
 // src/controllers/admin.controller.js
 
-const { Admin } = require('../models');
+const { User } = require('../models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 // Create new admin
 exports.createAdmin = async (req, res) => {
   try {
-    const { full_name, email, password, role, status } = req.body;
+    const { full_name, email, password } = req.body;
+
+    if (!full_name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Full name, email, and password are required',
+      });
+    }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const admin = await Admin.create({
+    const admin = await User.create({
       full_name,
       email,
-      password: hashedPassword,
-      role: role || 'admin',
+      password_hash: hashedPassword, // match field in User model
+      role: 'admin',                  // explicitly admin
     });
 
     res.status(201).json({
       success: true,
       message: 'Admin created successfully',
-      data: admin
+      data: admin,
     });
   } catch (err) {
     res.status(500).json({
       success: false,
       error: 'Admin creation failed',
-      details: err.message
+      details: err.message,
     });
   }
-};
+}
 
 // Get all admins
 exports.getAllAdmins = async (req, res) => {
