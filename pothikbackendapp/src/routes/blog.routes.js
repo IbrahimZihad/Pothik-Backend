@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const blogController = require("../controllers/blog.controller.js");
 const upload = require("../middleware/upload.middleware.js");
-const verifyToken = require("../middleware/auth.middleware.js"); // Adjust the import based on your auth middleware
+const { authMiddleware: verifyToken } = require("../middleware/auth.middleware.js");
 
 // -----------------------------------------------------------------------------
 // BLOG ROUTES
@@ -36,7 +36,7 @@ router.put("/blogs/:id",
 );
 
 // DELETE blog (with authentication)
-router.delete("/blogs/:id", 
+router.delete("/blogs/:id",
   verifyToken,                    // Verify user is authenticated
   blogController.deleteBlog
 );

@@ -135,3 +135,115 @@ exports.deleteAdmin = async (req, res) => {
     });
   }
 };
+
+// Get dashboard data
+exports.getDashboardData = async (req, res) => {
+  try {
+    res.json({
+      success: true,
+      message: 'Dashboard data retrieved',
+      data: {}
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+};
+
+// Get all bookings
+exports.getAllBookings = async (req, res) => {
+  try {
+    res.json({
+      success: true,
+      message: 'All bookings retrieved',
+      data: []
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+};
+
+// Approve booking
+exports.approveBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+    res.json({
+      success: true,
+      message: `Booking ${id} approved`
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+};
+
+// Assign guide to booking
+exports.assignGuide = async (req, res) => {
+  try {
+    const { id } = req.params;
+    res.json({
+      success: true,
+      message: `Guide assigned to booking ${id}`
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+};
+
+// Cancel booking
+exports.cancelBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+    res.json({
+      success: true,
+      message: `Booking ${id} cancelled`
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+};
+
+// Assign hotel to booking
+exports.assignHotel = async (req, res) => {
+  try {
+    const { id } = req.params;
+    res.json({
+      success: true,
+      message: `Hotel assigned to booking ${id}`
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+};
+
+// Assign transport to booking
+exports.assignTransport = async (req, res) => {
+  try {
+    const { id } = req.params;
+    res.json({
+      success: true,
+      message: `Transport assigned to booking ${id}`
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+};
