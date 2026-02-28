@@ -1,37 +1,44 @@
 // src/controllers/admin.controller.js
 
-const { Admin } = require('../models');
+const { User } = require('../models');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 // Create new admin
 exports.createAdmin = async (req, res) => {
   try {
-    const { full_name, email, password, role, status } = req.body;
+    const { full_name, email, password } = req.body;
+
+    if (!full_name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Full name, email, and password are required',
+      });
+    }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const admin = await Admin.create({
+    const admin = await User.create({
       full_name,
       email,
-      password: hashedPassword,
-      role: role || 'admin',
-      status: status || 'active'
+      password_hash: hashedPassword, // match field in User model
+      role: 'admin',                  // explicitly admin
     });
 
     res.status(201).json({
       success: true,
       message: 'Admin created successfully',
-      data: admin
+      data: admin,
     });
   } catch (err) {
     res.status(500).json({
       success: false,
       error: 'Admin creation failed',
-      details: err.message
+      details: err.message,
     });
   }
-};
+}
 
 // Get all admins
 exports.getAllAdmins = async (req, res) => {
@@ -135,6 +142,7 @@ exports.deleteAdmin = async (req, res) => {
     });
   }
 };
+<<<<<<< HEAD
 
 // Get dashboard data
 exports.getDashboardData = async (req, res) => {
@@ -146,12 +154,74 @@ exports.getDashboardData = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({
+=======
+// ================= ADMIN LOGIN =================
+exports.loginAdmin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // validation
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: "Email and password are required"
+      });
+    }
+
+    // find admin in DB
+    const admin = await Admin.findOne({ where: { email } });
+
+    if (!admin) {
+      return res.status(401).json({
+        success: false,
+        error: "Invalid email or password"
+      });
+    }
+
+    // compare password
+    const isMatch = await bcrypt.compare(password, admin.password);
+
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        error: "Invalid email or password"
+      });
+    }
+
+    //  CREATE ADMIN TOKEN (VERY IMPORTANT)
+    const token = jwt.sign(
+      {
+        id: admin.id,
+        email: admin.email,
+        isAdmin: true    // role.middleware.js will check this
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    return res.json({
+      success: true,
+      message: "Admin login successful",
+      data: {
+        admin: {
+          id: admin.id,
+          full_name: admin.full_name,
+          email: admin.email
+        },
+        token
+      }
+    });
+
+  } catch (err) {
+    return res.status(500).json({
+>>>>>>> 950144ec359eac5b55285baf4c7305f8cfcda778
       success: false,
       error: err.message
     });
   }
 };
 
+<<<<<<< HEAD
 // Get all bookings
 exports.getAllBookings = async (req, res) => {
   try {
@@ -247,3 +317,5 @@ exports.assignTransport = async (req, res) => {
     });
   }
 };
+=======
+>>>>>>> 950144ec359eac5b55285baf4c7305f8cfcda778
