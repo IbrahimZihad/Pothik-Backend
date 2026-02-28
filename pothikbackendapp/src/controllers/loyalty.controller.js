@@ -133,3 +133,35 @@ exports.deleteLog = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// -----------------------------------------------------------------------------
+// GET USER LOYALTY BALANCE + SUMMARY
+// -----------------------------------------------------------------------------
+exports.getUserBalance = async (req, res) => {
+  try {
+    const { user_id } = req.params;
+
+    const user = await User.findByPk(user_id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Aggregate totals from history
+    const history = await LoyaltyHistory.findAll({ where: { user_id } });
+
+    const total_earned = history.reduce((sum, h) => sum + (h.points_added || 0), 0);
+    const total_spent = history.reduce((sum, h) => sum + (h.points_deducted || 0), 0);
+
+    res.json({
+      success: true,
+      data: {
+        user_id: Number(user_id),
+        current_balance: user.loyalty_points,
+        total_earned,
+        total_spent,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

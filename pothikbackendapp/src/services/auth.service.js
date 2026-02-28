@@ -1,4 +1,4 @@
-const { User } = require('../models');
+const { User, LoyaltyHistory } = require('../models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../config');
@@ -25,6 +25,14 @@ exports.registerUser = async (userData) => {
         phone,
         role: role || 'customer',
         auth_provider: 'local',
+        loyalty_points: 50,
+    });
+
+    // 🎁 Welcome bonus: 50 loyalty points
+    await LoyaltyHistory.create({
+        user_id: user.user_id,
+        points_added: 50,
+        description: 'Welcome bonus — new account',
     });
 
     // Generate token
@@ -37,6 +45,7 @@ exports.registerUser = async (userData) => {
             email: user.email,
             phone: user.phone,
             role: user.role,
+            loyalty_points: user.loyalty_points,
             country: user.country,
             street_address: user.street_address,
         },
@@ -119,6 +128,14 @@ exports.googleLoginUser = async (idToken) => {
                     firebase_uid: uid,
                     auth_provider: 'google',
                     role: 'customer',
+                    loyalty_points: 50,
+                });
+
+                // 🎁 Welcome bonus: 50 loyalty points
+                await LoyaltyHistory.create({
+                    user_id: user.user_id,
+                    points_added: 50,
+                    description: 'Welcome bonus — new Google account',
                 });
             }
         }

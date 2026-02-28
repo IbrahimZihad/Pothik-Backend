@@ -43,7 +43,7 @@ exports.createAdmin = async (req, res) => {
 // Get all admins
 exports.getAllAdmins = async (req, res) => {
   try {
-    const admins = await Admin.findAll();
+    const admins = await User.findAll({ where: { role: 'admin' } });
 
     res.json({
       success: true,
@@ -62,7 +62,7 @@ exports.getAllAdmins = async (req, res) => {
 exports.getAdminById = async (req, res) => {
   try {
     const { id } = req.params;
-    const admin = await Admin.findByPk(id);
+    const admin = await User.findByPk(id);
 
     if (!admin) {
       return res.status(404).json({
@@ -87,7 +87,7 @@ exports.getAdminById = async (req, res) => {
 exports.updateAdmin = async (req, res) => {
   try {
     const { id } = req.params;
-    const admin = await Admin.findByPk(id);
+    const admin = await User.findByPk(id);
 
     if (!admin) {
       return res.status(404).json({
@@ -120,7 +120,7 @@ exports.updateAdmin = async (req, res) => {
 exports.deleteAdmin = async (req, res) => {
   try {
     const { id } = req.params;
-    const admin = await Admin.findByPk(id);
+    const admin = await User.findByPk(id);
 
     if (!admin) {
       return res.status(404).json({
@@ -142,19 +142,7 @@ exports.deleteAdmin = async (req, res) => {
     });
   }
 };
-<<<<<<< HEAD
 
-// Get dashboard data
-exports.getDashboardData = async (req, res) => {
-  try {
-    res.json({
-      success: true,
-      message: 'Dashboard data retrieved',
-      data: {}
-    });
-  } catch (err) {
-    res.status(500).json({
-=======
 // ================= ADMIN LOGIN =================
 exports.loginAdmin = async (req, res) => {
   try {
@@ -169,7 +157,7 @@ exports.loginAdmin = async (req, res) => {
     }
 
     // find admin in DB
-    const admin = await Admin.findOne({ where: { email } });
+    const admin = await User.findOne({ where: { email, role: 'admin' } });
 
     if (!admin) {
       return res.status(401).json({
@@ -179,7 +167,7 @@ exports.loginAdmin = async (req, res) => {
     }
 
     // compare password
-    const isMatch = await bcrypt.compare(password, admin.password);
+    const isMatch = await bcrypt.compare(password, admin.password_hash);
 
     if (!isMatch) {
       return res.status(401).json({
@@ -188,12 +176,12 @@ exports.loginAdmin = async (req, res) => {
       });
     }
 
-    //  CREATE ADMIN TOKEN (VERY IMPORTANT)
+    //  CREATE ADMIN TOKEN
     const token = jwt.sign(
       {
         id: admin.id,
         email: admin.email,
-        isAdmin: true    // role.middleware.js will check this
+        role: 'admin'
       },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
@@ -214,14 +202,28 @@ exports.loginAdmin = async (req, res) => {
 
   } catch (err) {
     return res.status(500).json({
->>>>>>> 950144ec359eac5b55285baf4c7305f8cfcda778
       success: false,
       error: err.message
     });
   }
 };
 
-<<<<<<< HEAD
+// Get dashboard data
+exports.getDashboardData = async (req, res) => {
+  try {
+    res.json({
+      success: true,
+      message: 'Dashboard data retrieved',
+      data: {}
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+};
+
 // Get all bookings
 exports.getAllBookings = async (req, res) => {
   try {
@@ -317,5 +319,3 @@ exports.assignTransport = async (req, res) => {
     });
   }
 };
-=======
->>>>>>> 950144ec359eac5b55285baf4c7305f8cfcda778

@@ -2,7 +2,7 @@ const { Booking, Coupon, User, LoyaltyHistory } = require("../models");
 const { Op, Sequelize } = require("sequelize");
 
 class BookingService {
-  
+
   // -----------------------------
   // APPLY COUPON
   // -----------------------------
@@ -103,14 +103,18 @@ class BookingService {
       total_price
     );
 
-    // 2️⃣ Apply loyalty points
-    const loyalty = await BookingService.useLoyaltyPoints(
-      user,
-      loyalty_points_used
+    // 2️⃣ Cap loyalty points to remaining cost after coupon
+    const priceAfterCoupon = total_price - discount;
+    const cappedPoints = Math.min(
+      loyalty_points_used || 0,
+      Math.max(priceAfterCoupon, 0)
     );
 
-    // 3️⃣ Final price calculation
-    const discounted_price = total_price - discount - (loyalty.deducted || 0);
+    // 3️⃣ Apply loyalty points
+    const loyalty = await BookingService.useLoyaltyPoints(user, cappedPoints);
+
+    // 4️⃣ Final price calculation
+    const discounted_price = priceAfterCoupon - (loyalty.deducted || 0);
     const amountPaid = discounted_price < 0 ? 0 : discounted_price;
 
     // 4️⃣ Earn new loyalty points
