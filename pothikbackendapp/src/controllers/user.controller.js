@@ -52,7 +52,7 @@ exports.getProfile = async (req, res) => {
   try {
     const userId = req.user.user_id;
     const user = await User.findByPk(userId, {
-      attributes: ['user_id', 'full_name', 'email', 'phone', 'role', 'loyalty_points', 'country', 'street_address', 'created_at']
+      attributes: ['user_id', 'full_name', 'email', 'phone', 'role', 'loyalty_points', 'country', 'street_address', 'profile_image', 'created_at']
     });
 
     if (!user) {
@@ -87,7 +87,7 @@ exports.updateProfile = async (req, res) => {
 
     // Fetch updated user
     const updatedUser = await User.findByPk(userId, {
-      attributes: ['user_id', 'full_name', 'email', 'phone', 'role', 'country', 'street_address', 'loyalty_points', 'created_at']
+      attributes: ['user_id', 'full_name', 'email', 'phone', 'role', 'country', 'street_address', 'profile_image', 'loyalty_points', 'created_at']
     });
 
     res.json({ message: 'Profile updated successfully', user: updatedUser });
@@ -121,5 +121,41 @@ exports.updatePassword = async (req, res) => {
     res.json({ message: 'Password updated successfully' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update password', details: err.message });
+  }
+};
+
+// Upload Profile Image
+exports.uploadProfileImage = async (req, res) => {
+  try {
+    console.log('uploadProfileImage called');
+    console.log('req.file:', req.file);
+    console.log('req.user:', req.user);
+
+    const userId = req.user.user_id;
+
+    if (!req.file) {
+      console.log('No file in request');
+      return res.status(400).json({ error: 'No image file provided' });
+    }
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Save filename to user record
+    const imageFilename = req.file.filename;
+    console.log('Saving filename:', imageFilename);
+    await user.update({ profile_image: imageFilename });
+
+    const updatedUser = await User.findByPk(userId, {
+      attributes: ['user_id', 'full_name', 'email', 'phone', 'role', 'country', 'street_address', 'profile_image', 'loyalty_points', 'created_at']
+    });
+
+    console.log('Profile image updated successfully');
+    res.json({ message: 'Profile image updated successfully', user: updatedUser });
+  } catch (err) {
+    console.error('uploadProfileImage error:', err);
+    res.status(500).json({ error: 'Failed to upload profile image', details: err.message });
   }
 };

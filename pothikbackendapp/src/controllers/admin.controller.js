@@ -1,6 +1,7 @@
 // src/controllers/admin.controller.js
 
-const { User } = require('../models');
+const { User, Package, Booking, Guide, Blog } = require('../models');
+const { Op } = require('sequelize');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -211,12 +212,38 @@ exports.loginAdmin = async (req, res) => {
 // Get dashboard data
 exports.getDashboardData = async (req, res) => {
   try {
+    // Total users count (customers)
+    const totalUsers = await User.count({ where: { role: 'customer' } });
+
+    // Active packages count
+    const activePackages = await Package.count({ where: { is_active: true } });
+
+    // Pending bookings count
+    const pendingBookings = await Booking.count({ where: { status: 'pending' } });
+
+    // Ongoing tours (confirmed bookings)
+    const ongoingTours = await Booking.count({
+      where: { status: 'confirmed' }
+    });
+
+    // Custom requests (custom package bookings)
+    const customRequests = await Booking.count({
+      where: { package_type: 'custom' }
+    });
+
+    // Total guides count
+    const availableGuides = await Guide.count();
+
     res.json({
-      success: true,
-      message: 'Dashboard data retrieved',
-      data: {}
+      totalUsers,
+      activePackages,
+      pendingBookings,
+      ongoingTours,
+      customRequests,
+      availableGuides
     });
   } catch (err) {
+    console.error('Dashboard data error:', err);
     res.status(500).json({
       success: false,
       error: err.message

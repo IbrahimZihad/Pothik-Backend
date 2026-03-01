@@ -6,14 +6,15 @@ const cors = require('cors');
 const morgan = require('morgan');
 const fs = require('fs');
 const path = require('path');
+const { errorHandler } = require('./middleware/error.middleware');
 
 // ✅ CREATE UPLOADS DIRECTORY AUTOMATICALLY
 const uploadDir = path.join(__dirname, '../uploads/blogs');
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-  console.log('✅ Upload directory created at:', uploadDir);
+    fs.mkdirSync(uploadDir, { recursive: true });
+    console.log('✅ Upload directory created at:', uploadDir);
 } else {
-  console.log('✅ Upload directory exists at:', uploadDir);
+    console.log('✅ Upload directory exists at:', uploadDir);
 }
 
 app.use([cors({
@@ -43,5 +44,8 @@ app.get('/', (req, res) => {
         }
     });
 });
+
+// Error handling middleware (must be after all routes)
+app.use(errorHandler);
 
 module.exports = app;

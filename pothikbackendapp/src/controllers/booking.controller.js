@@ -1,5 +1,6 @@
 const BookingService = require("../services/booking.service");
 const { Booking } = require("../models");
+const { createNotification } = require("./notification.controller");
 
 // -----------------------------------------------------------------------------
 // CREATE BOOKING
@@ -7,6 +8,15 @@ const { Booking } = require("../models");
 exports.createBooking = async (req, res) => {
   try {
     const booking = await BookingService.createBooking(req.body);
+
+    // Auto-create notification for the user
+    await createNotification({
+      user_id: booking.user_id,
+      type: "booking",
+      title: "Booking Created",
+      message: `Your booking #${booking.booking_id} has been created successfully and is pending confirmation.`,
+      link: "/user/bookings",
+    });
 
     res.status(201).json({
       success: true,
@@ -65,6 +75,21 @@ exports.updateBookingStatus = async (req, res) => {
       return res.status(404).json({ success: false, error: "Booking not found" });
 
     await booking.update({ status: req.body.status });
+
+    // Notify user about status change
+    const statusLabels = {
+      confirmed: "Confirmed ✅",
+      cancelled: "Cancelled ❌",
+      completed: "Completed 🎉",
+      pending: "Pending ⏳",
+    };
+    await createNotification({
+      user_id: booking.user_id,
+      type: "booking",
+      title: "Booking Status Updated",
+      message: `Your booking #${booking.booking_id} status has been updated to ${statusLabels[req.body.status] || req.body.status}.`,
+      link: "/user/bookings",
+    });
 
     res.json({
       success: true,
