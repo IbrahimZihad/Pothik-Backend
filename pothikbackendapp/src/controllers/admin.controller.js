@@ -346,3 +346,127 @@ exports.assignTransport = async (req, res) => {
     });
   }
 };
+
+// =================== USER MANAGEMENT ===================
+
+// Get all users
+// admin.controller.js
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.findAll({
+      where: { role: 'customer' }, // fetch customers only
+      order: [['user_id', 'DESC']],     // optional: latest first
+    });
+
+    res.json({
+      success: true,
+      users, // make sure frontend looks at res.data.users
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+};
+
+// Create user (optional)
+exports.createUser = async (req, res) => {
+  try {
+    const { full_name, email, password, role = 'user', status = 'active' } = req.body;
+    if (!full_name || !email || !password) return res.status(400).json({ success: false, error: 'Full name, email and password required' });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await User.create({ full_name, email, password_hash: hashedPassword, role, status });
+
+    res.status(201).json({ success: true, message: 'User created successfully', user });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Failed to create user', details: err.message });
+  }
+};
+
+// Update user
+exports.updateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findByPk(id);
+    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+
+    if (req.body.password) req.body.password = await bcrypt.hash(req.body.password, 10);
+    await user.update(req.body);
+
+    res.json({ success: true, message: 'User updated successfully', user });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+// Delete user
+exports.deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findByPk(id);
+    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+
+    await user.destroy();
+    res.json({ success: true, message: 'User deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+// =================== BLOG MANAGEMENT ===================
+
+// Get all blogs
+exports.getAllBlogs = async (req, res) => {
+  try {
+    const blogs = await Blog.findAll({ include: [User] });
+    res.json({ success: true, blogs });
+  } catch (err) {
+    console.error('Fetch blogs error:', err);
+    res.status(500).json({ success: false, error: 'Failed to fetch blogs' });
+  }
+};
+
+// Create blog
+exports.createBlog = async (req, res) => {
+  try {
+    const { title, content, slug } = req.body;
+    if (!title || !content || !slug) return res.status(400).json({ success: false, error: 'Title, content, slug required' });
+
+    const blog = await Blog.create({ title, content, slug, user_id: req.user.id });
+    res.status(201).json({ success: true, message: 'Blog created', blog });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: 'Failed to create blog' });
+  }
+};
+
+// Update blog
+exports.updateBlog = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const blog = await Blog.findByPk(id);
+    if (!blog) return res.status(404).json({ success: false, error: 'Blog not found' });
+
+    await blog.update(req.body);
+    res.json({ success: true, message: 'Blog updated', blog });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Failed to update blog' });
+  }
+};
+
+// Delete blog
+exports.deleteBlog = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const blog = await Blog.findByPk(id);
+    if (!blog) return res.status(404).json({ success: false, error: 'Blog not found' });
+
+    await blog.destroy();
+    res.json({ success: true, message: 'Blog deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
