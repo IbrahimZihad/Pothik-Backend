@@ -1,5 +1,5 @@
 const BookingService = require("../services/booking.service");
-const { Booking } = require("../models");
+const { Booking, User, Package } = require("../models");
 const { createNotification } = require("./notification.controller");
 
 // -----------------------------------------------------------------------------
@@ -34,7 +34,13 @@ exports.createBooking = async (req, res) => {
 // Get all bookings
 exports.getAllBookings = async (req, res) => {
   try {
-    const bookings = await Booking.findAll();
+    const bookings = await Booking.findAll({
+      include: [
+        { model: User, attributes: ['user_id', 'full_name', 'email'] },
+        { model: Package, attributes: ['package_id', 'name', 'base_price'] }
+      ],
+      order: [['created_at', 'DESC']]
+    });
     res.json({ success: true, count: bookings.length, data: bookings });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

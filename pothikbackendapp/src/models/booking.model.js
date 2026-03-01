@@ -22,7 +22,6 @@ module.exports = (sequelize, DataTypes) => {
       },
 
       created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
-      journey_date: { type: DataTypes.DATE, allowNull: true }, // optional
     },
     {
       tableName: "bookings",
