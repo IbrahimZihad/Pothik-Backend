@@ -11,8 +11,8 @@ const { authMiddleware: verifyToken } = require("../middleware/auth.middleware.j
 // CREATE a new blog (with image upload and authentication)
 router.post(
   "/blogs",
-  verifyToken,
-  upload.single("image"),
+  verifyToken,            // Verify user is logged in
+  upload.single("image"), // Handle single image upload
   blogController.createBlog
 );
 
@@ -29,15 +29,17 @@ router.get("/user/:user_id", blogController.getBlogsByUser);
 router.get("/blogs/:id/blog", blogController.getBlogById);
 
 // UPDATE blog (with optional image upload and authentication)
-router.put("/blogs/:id",
-  verifyToken,                    // 1. Verify user is authenticated
-  upload.single('image'),         // 2. Handle optional image upload
-  blogController.updateBlog       // 3. Update blog
+router.put(
+  "/blogs/:id",
+  verifyToken,            // Verify user is logged in
+  upload.single("image"), // Optional image upload
+  blogController.updateBlog
 );
 
 // DELETE blog (with authentication)
-router.delete("/blogs/:id",
-  verifyToken,                    // Verify user is authenticated
+router.delete(
+  "/blogs/:id",
+  verifyToken,            // Verify user is logged in
   blogController.deleteBlog
 );
 

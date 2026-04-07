@@ -131,18 +131,35 @@ exports.getBlogsByUser = async (req, res) => {
   }
 };
 
-// -----------------------------------------------------------------------------
-// UPDATE BLOG
-// -----------------------------------------------------------------------------
 exports.updateBlog = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const [updated] = await Blog.update(req.body, { where: { blog_id: id } });
-
-    if (!updated) {
+    // Fetch existing blog
+    const blog = await Blog.findByPk(id);
+    if (!blog) {
       return res.status(404).json({ success: false, message: "Blog not found" });
     }
+
+    // Check if logged in user is the author
+    if (req.user.user_id !== blog.user_id) {
+      return res.status(403).json({ success: false, message: "You are not authorized to edit this blog" });
+    }
+
+    // Prepare fields to update
+    const updatedFields = {
+      title: req.body.title || blog.title,
+      slug: req.body.slug || blog.slug,
+      content: req.body.content || blog.content,
+    };
+
+    // If image is uploaded, replace it
+    if (req.file) {
+      updatedFields.image = req.file.path.replace(/\\/g, "/");
+    }
+
+    // Update the blog
+    await Blog.update(updatedFields, { where: { blog_id: id } });
 
     return res.json({ success: true, message: "Blog updated successfully" });
   } catch (err) {
