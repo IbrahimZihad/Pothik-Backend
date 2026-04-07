@@ -1,4 +1,4 @@
-const { Review } = require('../models');
+const { Review, User } = require('../models');
 
 // Create new review
 exports.createReview = async (req, res) => {
@@ -14,57 +14,89 @@ exports.createReview = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Review created successfully',
-      data: review
+      data: review,
     });
   } catch (err) {
     res.status(500).json({
       success: false,
       error: 'Review creation failed',
-      details: err.message
+      details: err.message,
     });
   }
 };
 
-// Get all reviews
+// Get all reviews with user full name
 exports.getAllReviews = async (req, res) => {
   try {
-    const reviews = await Review.findAll();
+    const reviews = await Review.findAll({
+      include: [
+        {
+          model: User,
+          as: 'user', // MUST match Review.belongsTo(User, { as: 'user' })
+          attributes: ['user_id', 'full_name'],
+        },
+      ],
+      order: [['created_at', 'DESC']], // match your column name
+    });
+
+    const formatted = reviews.map(r => ({
+      review_id: r.id || r.review_id,
+      user_id: r.user_id,
+      user_name: r.user ? r.user.full_name : 'Unknown User',
+      rating: r.rating,
+      comment: r.comment,
+    }));
 
     res.json({
       success: true,
-      count: reviews.length,
-      data: reviews
+      count: formatted.length,
+      data: formatted,
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({
       success: false,
-      error: err.message
+      error: err.message,
     });
   }
 };
 
-// Get review by ID
+// Get review by ID with user full name
 exports.getReviewById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const review = await Review.findByPk(id);
+    const review = await Review.findByPk(id, {
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['user_id', 'full_name'],
+        },
+      ],
+    });
 
     if (!review) {
       return res.status(404).json({
         success: false,
-        error: 'Review not found'
+        error: 'Review not found',
       });
     }
 
     res.json({
       success: true,
-      data: review
+      data: {
+        review_id: review.id || review.review_id,
+        user_id: review.user_id,
+        user_name: review.user ? review.user.full_name : 'Unknown User',
+        rating: review.rating,
+        comment: review.comment,
+      },
     });
   } catch (err) {
     res.status(500).json({
       success: false,
-      error: err.message
+      error: err.message,
     });
   }
 };
@@ -75,18 +107,34 @@ exports.getReviewsByUser = async (req, res) => {
     const { user_id } = req.params;
 
     const reviews = await Review.findAll({
-      where: { user_id }
+      where: { user_id },
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['user_id', 'full_name'],
+        },
+      ],
+      order: [['created_at', 'DESC']],
     });
+
+    const formatted = reviews.map(r => ({
+      review_id: r.id || r.review_id,
+      user_id: r.user_id,
+      user_name: r.user ? r.user.full_name : 'Unknown User',
+      rating: r.rating,
+      comment: r.comment,
+    }));
 
     res.json({
       success: true,
-      count: reviews.length,
-      data: reviews
+      count: formatted.length,
+      data: formatted,
     });
   } catch (err) {
     res.status(500).json({
       success: false,
-      error: err.message
+      error: err.message,
     });
   }
 };
@@ -102,7 +150,7 @@ exports.updateReview = async (req, res) => {
     if (!review) {
       return res.status(404).json({
         success: false,
-        error: 'Review not found'
+        error: 'Review not found',
       });
     }
 
@@ -111,12 +159,12 @@ exports.updateReview = async (req, res) => {
     res.json({
       success: true,
       message: 'Review updated successfully',
-      data: review
+      data: review,
     });
   } catch (err) {
     res.status(500).json({
       success: false,
-      error: err.message
+      error: err.message,
     });
   }
 };
@@ -131,7 +179,7 @@ exports.deleteReview = async (req, res) => {
     if (!review) {
       return res.status(404).json({
         success: false,
-        error: 'Review not found'
+        error: 'Review not found',
       });
     }
 
@@ -139,12 +187,12 @@ exports.deleteReview = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Review deleted successfully'
+      message: 'Review deleted successfully',
     });
   } catch (err) {
     res.status(500).json({
       success: false,
-      error: err.message
+      error: err.message,
     });
   }
 };
