@@ -13,14 +13,6 @@ module.exports = (sequelize, DataTypes) => {
                 key: 'user_id'
             }
         },
-        service_type: {
-            type: DataTypes.ENUM('hotel', 'transport', 'guide', 'package'),
-            allowNull: false,
-        },
-        service_id: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-        },
         rating: {
             type: DataTypes.INTEGER,
             allowNull: false,
@@ -46,34 +38,6 @@ module.exports = (sequelize, DataTypes) => {
         Review.belongsTo(models.User, {
             foreignKey: "user_id",
             as: "user",
-        });
-
-        // REVIEW → HOTEL (POLYMORPHIC)
-        Review.belongsTo(models.Hotel, {
-            foreignKey: "service_id",
-            constraints: false,
-            as: "hotel",
-        });
-
-        // REVIEW → TRANSPORT (POLYMORPHIC)
-        Review.belongsTo(models.Transport, {
-            foreignKey: "service_id",
-            constraints: false,
-            as: "transport",
-        });
-
-        // REVIEW → GUIDE (POLYMORPHIC)
-        Review.belongsTo(models.Guide, {
-            foreignKey: "service_id",
-            constraints: false,
-            as: "guide",
-        });
-
-        // REVIEW → PACKAGE (POLYMORPHIC)
-        Review.belongsTo(models.Package, {
-            foreignKey: "service_id",
-            constraints: false,
-            as: "package",
         });
     };
 

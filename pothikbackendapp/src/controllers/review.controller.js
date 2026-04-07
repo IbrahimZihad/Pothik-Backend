@@ -3,12 +3,10 @@ const { Review } = require('../models');
 // Create new review
 exports.createReview = async (req, res) => {
   try {
-    const { user_id, service_type, service_id, rating, comment } = req.body;
+    const { user_id, rating, comment } = req.body;
 
     const review = await Review.create({
       user_id,
-      service_type,
-      service_id,
       rating,
       comment,
     });
@@ -49,6 +47,7 @@ exports.getAllReviews = async (req, res) => {
 exports.getReviewById = async (req, res) => {
   try {
     const { id } = req.params;
+
     const review = await Review.findByPk(id);
 
     if (!review) {
@@ -74,32 +73,9 @@ exports.getReviewById = async (req, res) => {
 exports.getReviewsByUser = async (req, res) => {
   try {
     const { user_id } = req.params;
+
     const reviews = await Review.findAll({
       where: { user_id }
-    });
-
-    res.json({
-      success: true,
-      count: reviews.length,
-      data: reviews
-    });
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      error: err.message
-    });
-  }
-};
-
-// Get reviews by service type and service ID
-exports.getReviewsByService = async (req, res) => {
-  try {
-    const { service_type, service_id } = req.params;
-    const reviews = await Review.findAll({
-      where: { 
-        service_type,
-        service_id 
-      }
     });
 
     res.json({
@@ -122,6 +98,7 @@ exports.updateReview = async (req, res) => {
     const { rating, comment } = req.body;
 
     const review = await Review.findByPk(id);
+
     if (!review) {
       return res.status(404).json({
         success: false,
@@ -148,6 +125,7 @@ exports.updateReview = async (req, res) => {
 exports.deleteReview = async (req, res) => {
   try {
     const { id } = req.params;
+
     const review = await Review.findByPk(id);
 
     if (!review) {
