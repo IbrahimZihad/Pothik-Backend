@@ -11,8 +11,12 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "testMatch": ["**/__tests__/**/*.test.js"],
-    "setupFilesAfterFramework": ["<rootDir>/src/__tests__/setup.js"]
+    "testMatch": [
+      "**/__tests__/**/*.test.js"
+    ],
+    "setupFilesAfterFramework": [
+      "<rootDir>/src/__tests__/setup.js"
+    ]
   },
   "keywords": [],
   "author": "",
@@ -34,6 +38,7 @@
     "sequelize": "^6.37.7"
   },
   "devDependencies": {
+    "cross-env": "^10.1.0",
     "jest": "^30.3.0",
     "supertest": "^7.2.2"
   }
