@@ -11,8 +11,8 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "testMatch": ["*/_tests_//.test.js"],
-    "setupFilesAfterFramework": ["<rootDir>/src/_tests_/setup.js"]
+    "testMatch": ["**/__tests__/**/*.test.js"],
+    "setupFilesAfterFramework": ["<rootDir>/src/__tests__/setup.js"]
   },
   "keywords": [],
   "author": "",
