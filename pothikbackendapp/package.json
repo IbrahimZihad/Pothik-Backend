@@ -14,7 +14,7 @@
     "testMatch": [
       "**/__tests__/**/*.test.js"
     ],
-    "setupFiles": [
+    "setupFilesAfterEnv": [
       "<rootDir>/src/__tests__/setup.js"
     ]
   },
