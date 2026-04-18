@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pothik Payment</title>
+    <style>
+        :root {
+            --bg: #f6f7f2;
+            --ink: #1e2a22;
+            --accent: #0a7a52;
+            --accent-2: #e3f5dc;
+            --danger: #b3261e;
+            --card: #ffffff;
+            --muted: #5f6b63;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--ink);
+            background: radial-gradient(circle at top right, #dff5e7, transparent 35%), var(--bg);
+            display: grid;
+            place-items: center;
+            padding: 20px;
+        }
+
+        .card {
+            width: min(720px, 100%);
+            background: var(--card);
+            border: 1px solid #dfe7df;
+            border-radius: 18px;
+            padding: 28px;
+            box-shadow: 0 12px 30px rgba(21, 35, 28, 0.08);
+        }
+
+        h1 {
+            margin: 0 0 10px;
+            font-size: 1.8rem;
+            letter-spacing: 0.3px;
+        }
+
+        p.helper {
+            margin-top: 0;
+            color: var(--muted);
+        }
+
+        form {
+            display: grid;
+            gap: 14px;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            display: grid;
+            gap: 6px;
+            font-size: 0.93rem;
+            color: #2d3a33;
+        }
+
+        input {
+            border: 1px solid #c8d5ca;
+            border-radius: 10px;
+            padding: 11px 12px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 120ms ease, box-shadow 120ms ease;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(10, 122, 82, 0.12);
+        }
+
+        button {
+            grid-column: 1 / -1;
+            border: 0;
+            border-radius: 12px;
+            background: linear-gradient(140deg, #0a7a52, #0f5f43);
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: transform 120ms ease, filter 120ms ease;
+        }
+
+        button:hover {
+            filter: brightness(1.03);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .status {
+            margin-top: 16px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            background: var(--accent-2);
+            color: #10422c;
+            display: none;
+        }
+
+        .status.error {
+            background: #fdecea;
+            color: var(--danger);
+        }
+
+        @media (max-width: 700px) {
+            form {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="card">
+        <h1>Complete Your Payment</h1>
+        <p class="helper">Fill the booking details and continue to SSLCommerz checkout.</p>
+
+        <form id="paymentForm">
+            <label>
+                Booking ID
+                <input type="number" name="booking_id" placeholder="e.g. 101" required />
+            </label>
+
+            <label>
+                Amount (BDT)
+                <input type="number" name="amount" placeholder="e.g. 2500" step="0.01" min="1" required />
+            </label>
+
+            <label>
+                Full Name
+                <input type="text" name="customer_name" placeholder="Customer name" required />
+            </label>
+
+            <label>
+                Email
+                <input type="email" name="customer_email" placeholder="customer@example.com" required />
+            </label>
+
+            <label>
+                Phone
+                <input type="text" name="customer_phone" placeholder="017XXXXXXXX" required />
+            </label>
+
+            <label class="full">
+                Address
+                <input type="text" name="customer_address" placeholder="Dhaka" />
+            </label>
+
+            <button id="payBtn" type="submit">Pay With SSLCommerz</button>
+        </form>
+
+        <div id="status" class="status"></div>
+    </main>
+
+    <script>
+        const form = document.getElementById('paymentForm');
+        const statusEl = document.getElementById('status');
+        const payBtn = document.getElementById('payBtn');
+
+        const showStatus = (msg, isError = false) => {
+            statusEl.textContent = msg;
+            statusEl.style.display = 'block';
+            statusEl.classList.toggle('error', isError);
+        };
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            payBtn.disabled = true;
+            showStatus('Creating payment session...');
+
+            const formData = new FormData(form);
+            const payload = Object.fromEntries(formData.entries());
+            payload.currency = 'BDT';
+
+            try {
+                const response = await fetch('/api/payments/init', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                const result = await response.json();
+                if (!response.ok || !result?.success || !result?.data?.gateway_url) {
+                    throw new Error(result?.error || result?.message || 'Failed to initialize payment');
+                }
+
+                showStatus('Redirecting to SSLCommerz...');
+                window.location.href = result.data.gateway_url;
+            } catch (error) {
+                showStatus(error.message || 'Payment initialization failed', true);
+                payBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>

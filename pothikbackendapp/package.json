@@ -3,9 +3,20 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "cross-env NODE_ENV=test jest --forceExit",
+    "test:watch": "cross-env NODE_ENV=test jest --watch",
+    "test:coverage": "cross-env NODE_ENV=test jest --coverage --forceExit",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/__tests__/**/*.test.js"
+    ],
+    "setupFiles": [
+      "<rootDir>/src/__tests__/setup.js"
+    ]
   },
   "keywords": [],
   "author": "",
@@ -24,6 +35,12 @@
     "mysql2": "^3.15.3",
     "nodemailer": "^7.0.12",
     "nodemon": "^3.1.11",
-    "sequelize": "^6.37.7"
+    "sequelize": "^6.37.7",
+    "sslcommerz-lts": "^1.2.0"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "jest": "^30.3.0",
+    "supertest": "^7.2.2"
   }
 }
