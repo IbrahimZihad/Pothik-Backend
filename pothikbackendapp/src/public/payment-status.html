@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Payment Status</title>
+    <style>
+        :root {
+            --ok-bg: #e8f8ef;
+            --ok-ink: #0d6a3c;
+            --fail-bg: #ffeded;
+            --fail-ink: #9e1a1a;
+            --cancel-bg: #fff6e9;
+            --cancel-ink: #9a5f00;
+            --base-bg: #f8f9fb;
+            --card: #ffffff;
+            --ink: #1f2a37;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 20px;
+            background:
+                linear-gradient(160deg, rgba(17, 123, 94, 0.08), transparent 40%),
+                linear-gradient(325deg, rgba(255, 206, 145, 0.2), transparent 35%),
+                var(--base-bg);
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--ink);
+        }
+
+        .panel {
+            width: min(620px, 100%);
+            background: var(--card);
+            border: 1px solid #e6e9ee;
+            border-radius: 18px;
+            padding: 26px;
+            box-shadow: 0 14px 28px rgba(35, 42, 54, 0.08);
+        }
+
+        h1 {
+            margin: 0 0 8px;
+        }
+
+        p {
+            margin: 6px 0;
+        }
+
+        .chip {
+            display: inline-block;
+            padding: 7px 12px;
+            border-radius: 999px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin: 8px 0 16px;
+        }
+
+        .ok {
+            background: var(--ok-bg);
+            color: var(--ok-ink);
+        }
+
+        .fail {
+            background: var(--fail-bg);
+            color: var(--fail-ink);
+        }
+
+        .cancel {
+            background: var(--cancel-bg);
+            color: var(--cancel-ink);
+        }
+
+        .actions {
+            margin-top: 18px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        a {
+            text-decoration: none;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #0f7a52;
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: #f1f3f6;
+            color: #1f2a37;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="panel">
+        <h1 id="title">Payment Update</h1>
+        <span id="chip" class="chip">Processing</span>
+        <p id="message">We received your payment response.</p>
+        <p id="tran">Transaction ID: -</p>
+
+        <div class="actions">
+            <a class="btn-primary" href="/api/payment">Pay Again</a>
+            <a class="btn-secondary" href="/">Back To Home</a>
+        </div>
+    </main>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const status = (params.get('status') || 'failed').toLowerCase();
+        const message = params.get('message') || 'Payment response received';
+        const tranId = params.get('tran_id') || '-';
+
+        const title = document.getElementById('title');
+        const chip = document.getElementById('chip');
+        const messageEl = document.getElementById('message');
+        const tranEl = document.getElementById('tran');
+
+        let chipClass = 'fail';
+        let heading = 'Payment Failed';
+
+        if (status === 'paid') {
+            chipClass = 'ok';
+            heading = 'Payment Successful';
+        } else if (status === 'cancelled') {
+            chipClass = 'cancel';
+            heading = 'Payment Cancelled';
+        }
+
+        title.textContent = heading;
+        chip.textContent = status.toUpperCase();
+        chip.className = `chip ${chipClass}`;
+        messageEl.textContent = message;
+        tranEl.textContent = `Transaction ID: ${tranId}`;
+    </script>
+</body>
+
+</html>
