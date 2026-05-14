@@ -3,7 +3,7 @@ const nodemailer = require('nodemailer');
 
 // TEMPORARY: Hardcoded for testing (will move back to .env after testing)
 const EMAIL_USER = 'tarunchandradas91@gmail.com';
-const EMAIL_PASSWORD = 'kwimvtepxtbkazni';
+const EMAIL_PASSWORD = 'suiz ivjw ugcs zkbj';
 
 // Debug: Log if email config is loaded
 console.log('📧 Email Config Loaded:');
