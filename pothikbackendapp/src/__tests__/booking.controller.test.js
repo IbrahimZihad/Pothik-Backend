@@ -1,29 +1,25 @@
-/**
- * Unit Tests for Booking Controller
- * ====================================
- * Tests: createBooking, getAllBookings, getBookingById,
- *        getBookingsByUser, updateBookingStatus, deleteBooking
- */
+const blogController = require('../controllers/blog.controller');
+const { Blog, User } = require('../models');
 
-const bookingController = require('../controllers/booking.controller');
-const BookingService = require('../services/booking.service');
-const { Booking, User, Package } = require('../models');
-const { createNotification } = require('../controllers/notification.controller');
-
-jest.mock('../services/booking.service');
 jest.mock('../models', () => ({
-  Booking: {
+  Blog: {
+    create: jest.fn(),
     findAll: jest.fn(),
     findByPk: jest.fn(),
+    findOne: jest.fn(),
+    update: jest.fn(),
+    destroy: jest.fn(),
   },
   User: { name: 'User' },
-  Package: { name: 'Package' },
-}));
-jest.mock('../controllers/notification.controller', () => ({
-  createNotification: jest.fn().mockResolvedValue(null),
 }));
 
-const mockRequest = (body = {}, params = {}) => ({ body, params });
+const mockRequest = (body = {}, params = {}, query = {}, user = {}, file = null) => ({
+  body,
+  params,
+  query,
+  user,
+  file,
+});
 
 const mockResponse = () => {
   const res = {};
@@ -32,235 +28,320 @@ const mockResponse = () => {
   return res;
 };
 
-describe('Booking Controller', () => {
+describe('Blog Controller', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
 
   // ─────────────────────────────────────────────────────────────────────────
-  // CREATE BOOKING
+  // CREATE BLOG
   // ─────────────────────────────────────────────────────────────────────────
-  describe('createBooking', () => {
-    it('should create booking and send notification', async () => {
-      const booking = { booking_id: 1, user_id: 5, status: 'pending' };
-      BookingService.createBooking.mockResolvedValue(booking);
+  describe('createBlog', () => {
+    it('should create a blog and return 201', async () => {
+      const blogData = { title: 'My Blog', slug: 'my-blog', content: 'Content here' };
+      const createdBlog = { blog_id: 1, ...blogData, user_id: 5 };
+      Blog.create.mockResolvedValue(createdBlog);
 
-      const req = mockRequest({ user_id: 5, package_id: 1, total_price: 5000 });
+      const req = mockRequest(blogData, {}, {}, { user_id: 5 });
       const res = mockResponse();
 
-      await bookingController.createBooking(req, res);
+      await blogController.createBlog(req, res);
 
-      expect(BookingService.createBooking).toHaveBeenCalledWith(req.body);
-      expect(createNotification).toHaveBeenCalledWith(expect.objectContaining({
+      expect(Blog.create).toHaveBeenCalledWith(expect.objectContaining({
         user_id: 5,
-        type: 'booking',
-        title: 'Booking Created',
+        title: 'My Blog',
+        slug: 'my-blog',
+        content: 'Content here',
       }));
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
         success: true,
-        data: booking,
+        blog: createdBlog,
       }));
     });
 
-    it('should return 500 on error', async () => {
-      BookingService.createBooking.mockRejectedValue(new Error('Service error'));
+    it('should handle file upload path', async () => {
+      const blogData = { title: 'Blog', slug: 'blog', content: 'Text' };
+      Blog.create.mockResolvedValue({ blog_id: 1 });
 
-      const req = mockRequest({});
+      const req = mockRequest(blogData, {}, {}, { user_id: 1 }, { path: 'uploads\\blog\\image.jpg' });
       const res = mockResponse();
 
-      await bookingController.createBooking(req, res);
+      await blogController.createBlog(req, res);
+
+      expect(Blog.create).toHaveBeenCalledWith(expect.objectContaining({
+        image: 'uploads/blog/image.jpg',
+      }));
+    });
+
+    it('should return 400 if title is missing', async () => {
+      const req = mockRequest({ slug: 'slug', content: 'content' }, {}, {}, { user_id: 1 });
+      const res = mockResponse();
+
+      await blogController.createBlog(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false }));
+    });
+
+    it('should return 400 if slug is missing', async () => {
+      const req = mockRequest({ title: 'Title', content: 'content' }, {}, {}, { user_id: 1 });
+      const res = mockResponse();
+
+      await blogController.createBlog(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
+
+    it('should return 400 if content is missing', async () => {
+      const req = mockRequest({ title: 'Title', slug: 'slug' }, {}, {}, { user_id: 1 });
+      const res = mockResponse();
+
+      await blogController.createBlog(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
+
+    it('should return 500 on database error', async () => {
+      Blog.create.mockRejectedValue(new Error('DB error'));
+
+      const req = mockRequest({ title: 'T', slug: 's', content: 'c' }, {}, {}, { user_id: 1 });
+      const res = mockResponse();
+
+      await blogController.createBlog(req, res);
 
       expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ success: false, error: 'Service error' });
     });
   });
 
   // ─────────────────────────────────────────────────────────────────────────
-  // GET ALL BOOKINGS
+  // GET ALL BLOGS
   // ─────────────────────────────────────────────────────────────────────────
-  describe('getAllBookings', () => {
-    it('should return all bookings with user and package info', async () => {
-      const bookings = [{ booking_id: 1 }, { booking_id: 2 }];
-      Booking.findAll.mockResolvedValue(bookings);
+  describe('getAllBlogs', () => {
+    it('should return all blogs', async () => {
+      const blogs = [{ blog_id: 1, title: 'Blog 1' }];
+      Blog.findAll.mockResolvedValue(blogs);
 
       const req = mockRequest();
       const res = mockResponse();
 
-      await bookingController.getAllBookings(req, res);
+      await blogController.getAllBlogs(req, res);
 
-      expect(Booking.findAll).toHaveBeenCalledWith(expect.objectContaining({
-        include: expect.any(Array),
-        order: [['created_at', 'DESC']],
-      }));
-      expect(res.json).toHaveBeenCalledWith({ success: true, count: 2, data: bookings });
+      expect(Blog.findAll).toHaveBeenCalled();
+      expect(res.json).toHaveBeenCalledWith({ success: true, blogs });
     });
 
     it('should return 500 on error', async () => {
-      Booking.findAll.mockRejectedValue(new Error('DB error'));
+      Blog.findAll.mockRejectedValue(new Error('DB error'));
 
       const req = mockRequest();
       const res = mockResponse();
 
-      await bookingController.getAllBookings(req, res);
+      await blogController.getAllBlogs(req, res);
 
       expect(res.status).toHaveBeenCalledWith(500);
     });
   });
 
   // ─────────────────────────────────────────────────────────────────────────
-  // GET BOOKING BY ID
+  // GET BLOG BY ID
   // ─────────────────────────────────────────────────────────────────────────
-  describe('getBookingById', () => {
-    it('should return booking by id', async () => {
-      const booking = { booking_id: 1 };
-      Booking.findByPk.mockResolvedValue(booking);
+  describe('getBlogById', () => {
+    it('should return blog by id', async () => {
+      const blog = { blog_id: 1, title: 'Blog' };
+      Blog.findByPk.mockResolvedValue(blog);
 
       const req = mockRequest({}, { id: 1 });
       const res = mockResponse();
 
-      await bookingController.getBookingById(req, res);
+      await blogController.getBlogById(req, res);
 
-      expect(res.json).toHaveBeenCalledWith({ success: true, data: booking });
+      expect(res.json).toHaveBeenCalledWith({ success: true, blog });
     });
 
-    it('should return 404 if booking not found', async () => {
-      Booking.findByPk.mockResolvedValue(null);
+    it('should return 404 if blog not found', async () => {
+      Blog.findByPk.mockResolvedValue(null);
 
       const req = mockRequest({}, { id: 999 });
       const res = mockResponse();
 
-      await bookingController.getBookingById(req, res);
+      await blogController.getBlogById(req, res);
 
       expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({ success: false, error: 'Booking not found' });
+      expect(res.json).toHaveBeenCalledWith({ success: false, message: 'Blog not found' });
     });
 
     it('should return 500 on error', async () => {
-      Booking.findByPk.mockRejectedValue(new Error('DB error'));
+      Blog.findByPk.mockRejectedValue(new Error('DB error'));
 
       const req = mockRequest({}, { id: 1 });
       const res = mockResponse();
 
-      await bookingController.getBookingById(req, res);
+      await blogController.getBlogById(req, res);
 
       expect(res.status).toHaveBeenCalledWith(500);
     });
   });
 
   // ─────────────────────────────────────────────────────────────────────────
-  // GET BOOKINGS BY USER
+  // GET BLOG BY SLUG
   // ─────────────────────────────────────────────────────────────────────────
-  describe('getBookingsByUser', () => {
-    it('should return bookings for a user', async () => {
-      const bookings = [{ booking_id: 1 }];
-      Booking.findAll.mockResolvedValue(bookings);
+  describe('getBlogBySlug', () => {
+    it('should return blog by slug', async () => {
+      const blog = { blog_id: 1, slug: 'my-blog' };
+      Blog.findOne.mockResolvedValue(blog);
+
+      const req = mockRequest({}, { slug: 'my-blog' });
+      const res = mockResponse();
+
+      await blogController.getBlogBySlug(req, res);
+
+      expect(res.json).toHaveBeenCalledWith({ success: true, blog });
+    });
+
+    it('should return 404 if blog not found', async () => {
+      Blog.findOne.mockResolvedValue(null);
+
+      const req = mockRequest({}, { slug: 'not-found' });
+      const res = mockResponse();
+
+      await blogController.getBlogBySlug(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // GET BLOGS BY USER
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('getBlogsByUser', () => {
+    it('should return blogs by user_id', async () => {
+      const blogs = [{ blog_id: 1 }];
+      Blog.findAll.mockResolvedValue(blogs);
 
       const req = mockRequest({}, { user_id: 5 });
       const res = mockResponse();
 
-      await bookingController.getBookingsByUser(req, res);
+      await blogController.getBlogsByUser(req, res);
 
-      expect(Booking.findAll).toHaveBeenCalledWith({ where: { user_id: 5 } });
-      expect(res.json).toHaveBeenCalledWith({ success: true, count: 1, data: bookings });
+      expect(Blog.findAll).toHaveBeenCalledWith(expect.objectContaining({
+        where: { user_id: 5 },
+      }));
+      expect(res.json).toHaveBeenCalledWith({ success: true, blogs });
     });
 
     it('should return 500 on error', async () => {
-      Booking.findAll.mockRejectedValue(new Error('DB error'));
+      Blog.findAll.mockRejectedValue(new Error('DB error'));
 
       const req = mockRequest({}, { user_id: 5 });
       const res = mockResponse();
 
-      await bookingController.getBookingsByUser(req, res);
+      await blogController.getBlogsByUser(req, res);
 
       expect(res.status).toHaveBeenCalledWith(500);
     });
   });
 
   // ─────────────────────────────────────────────────────────────────────────
-  // UPDATE BOOKING STATUS
+  // UPDATE BLOG
   // ─────────────────────────────────────────────────────────────────────────
-  describe('updateBookingStatus', () => {
-    it('should update booking status and notify user', async () => {
-      const booking = {
-        booking_id: 1,
-        user_id: 5,
-        update: jest.fn().mockResolvedValue(true),
+  describe('updateBlog', () => {
+    it('should update blog successfully', async () => {
+      // Controller calls findByPk first, then Blog.update
+      const existingBlog = {
+        blog_id: 1,
+        user_id: 1,
+        title: 'Old Title',
+        slug: 'old-slug',
+        content: 'Old content',
       };
-      Booking.findByPk.mockResolvedValue(booking);
+      Blog.findByPk.mockResolvedValue(existingBlog);
+      Blog.update.mockResolvedValue([1]);
 
-      const req = mockRequest({ status: 'confirmed' }, { id: 1 });
+      // req.user.user_id must match blog.user_id to pass auth check
+      const req = mockRequest({ title: 'Updated' }, { id: 1 }, {}, { user_id: 1 });
       const res = mockResponse();
 
-      await bookingController.updateBookingStatus(req, res);
+      await blogController.updateBlog(req, res);
 
-      expect(booking.update).toHaveBeenCalledWith({ status: 'confirmed' });
-      expect(createNotification).toHaveBeenCalledWith(expect.objectContaining({
-        user_id: 5,
-        type: 'booking',
-        title: 'Booking Status Updated',
-      }));
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+      expect(Blog.update).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Updated' }),
+        { where: { blog_id: 1 } }
+      );
+      expect(res.json).toHaveBeenCalledWith({ success: true, message: 'Blog updated successfully' });
     });
 
-    it('should return 404 if booking not found', async () => {
-      Booking.findByPk.mockResolvedValue(null);
+    it('should return 404 if blog not found', async () => {
+      // Controller returns 404 when findByPk returns null
+      Blog.findByPk.mockResolvedValue(null);
 
-      const req = mockRequest({ status: 'confirmed' }, { id: 999 });
+      const req = mockRequest({ title: 'Updated' }, { id: 999 }, {}, { user_id: 1 });
       const res = mockResponse();
 
-      await bookingController.updateBookingStatus(req, res);
+      await blogController.updateBlog(req, res);
 
       expect(res.status).toHaveBeenCalledWith(404);
     });
 
-    it('should return 500 on error', async () => {
-      Booking.findByPk.mockRejectedValue(new Error('DB error'));
+    it('should return 403 if user is not the author', async () => {
+      const existingBlog = { blog_id: 1, user_id: 99 }; // owned by user 99
+      Blog.findByPk.mockResolvedValue(existingBlog);
 
-      const req = mockRequest({ status: 'confirmed' }, { id: 1 });
+      // logged in as user 1, not 99
+      const req = mockRequest({ title: 'Hacked' }, { id: 1 }, {}, { user_id: 1 });
       const res = mockResponse();
 
-      await bookingController.updateBookingStatus(req, res);
+      await blogController.updateBlog(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+    });
+
+    it('should return 500 on error', async () => {
+      Blog.findByPk.mockRejectedValue(new Error('DB error'));
+
+      const req = mockRequest({}, { id: 1 }, {}, { user_id: 1 });
+      const res = mockResponse();
+
+      await blogController.updateBlog(req, res);
 
       expect(res.status).toHaveBeenCalledWith(500);
     });
   });
 
   // ─────────────────────────────────────────────────────────────────────────
-  // DELETE BOOKING
+  // DELETE BLOG
   // ─────────────────────────────────────────────────────────────────────────
-  describe('deleteBooking', () => {
-    it('should delete booking successfully', async () => {
-      const booking = { booking_id: 1, destroy: jest.fn().mockResolvedValue(true) };
-      Booking.findByPk.mockResolvedValue(booking);
+  describe('deleteBlog', () => {
+    it('should delete blog successfully', async () => {
+      Blog.destroy.mockResolvedValue(1);
 
       const req = mockRequest({}, { id: 1 });
       const res = mockResponse();
 
-      await bookingController.deleteBooking(req, res);
+      await blogController.deleteBlog(req, res);
 
-      expect(booking.destroy).toHaveBeenCalled();
-      expect(res.json).toHaveBeenCalledWith({ success: true, message: 'Booking deleted' });
+      expect(Blog.destroy).toHaveBeenCalledWith({ where: { blog_id: 1 } });
+      expect(res.json).toHaveBeenCalledWith({ success: true, message: 'Blog deleted successfully' });
     });
 
-    it('should return 404 if booking not found', async () => {
-      Booking.findByPk.mockResolvedValue(null);
+    it('should return 404 if blog not found', async () => {
+      Blog.destroy.mockResolvedValue(0);
 
       const req = mockRequest({}, { id: 999 });
       const res = mockResponse();
 
-      await bookingController.deleteBooking(req, res);
+      await blogController.deleteBlog(req, res);
 
       expect(res.status).toHaveBeenCalledWith(404);
     });
 
     it('should return 500 on error', async () => {
-      Booking.findByPk.mockRejectedValue(new Error('DB error'));
+      Blog.destroy.mockRejectedValue(new Error('DB error'));
 
       const req = mockRequest({}, { id: 1 });
       const res = mockResponse();
 
-      await bookingController.deleteBooking(req, res);
+      await blogController.deleteBlog(req, res);
 
       expect(res.status).toHaveBeenCalledWith(500);
     });

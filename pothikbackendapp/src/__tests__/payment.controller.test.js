@@ -1,14 +1,3 @@
-/**
- * Unit Tests for Payment Controller
- * ====================================
- * Tests: createPayment, getAllPayments, getPaymentById,
- *        getPaymentsByBooking, updatePaymentStatus, deletePayment
- * 
- * (SSLCommerz integration tests are excluded as they require
- *  external gateway configuration and are better suited for
- *  integration tests)
- */
-
 const paymentController = require('../controllers/payment.controller');
 const { Payment, Booking } = require('../models');
 
@@ -35,7 +24,12 @@ jest.mock('../config', () => ({
   POTHIK_FRONTEND_URL: 'http://localhost:3000',
 }));
 
-jest.mock('sslcommerz-lts');
+// Mock sslcommerz-lts so the module loads without the package installed
+jest.mock('sslcommerz-lts', () => {
+  return jest.fn().mockImplementation(() => ({
+    init: jest.fn().mockResolvedValue({ GatewayPageURL: null }),
+  }));
+});
 
 const mockRequest = (body = {}, params = {}, query = {}) => ({
   body,

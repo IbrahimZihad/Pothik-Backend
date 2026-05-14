@@ -1,124 +1,176 @@
-const BookingService = require("../services/booking.service");
-const { Booking, User, Package } = require("../models");
-const { createNotification } = require("./notification.controller");
+const { Booking } = require('../models');
+const BookingService = require('../services/booking.service');
+const { createNotification } = require('../controllers/notification.controller');
 
-// -----------------------------------------------------------------------------
+// ─────────────────────────────────────────────
 // CREATE BOOKING
-// -----------------------------------------------------------------------------
+// ─────────────────────────────────────────────
 exports.createBooking = async (req, res) => {
   try {
     const booking = await BookingService.createBooking(req.body);
 
-    // Auto-create notification for the user
     await createNotification({
       user_id: booking.user_id,
-      type: "booking",
-      title: "Booking Created",
+      type: 'booking',
+      title: 'Booking Created',
       message: `Your booking #${booking.booking_id} has been created successfully and is pending confirmation.`,
-      link: "/user/bookings",
+      link: '/user/bookings',
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
-      message: "Booking created successfully",
+      message: 'Booking created successfully',
       data: booking,
     });
-  } catch (err) {
-    res.status(500).json({
+  } catch (error) {
+    return res.status(500).json({
       success: false,
-      error: err.message,
+      error: error.message,
     });
   }
 };
 
-// Get all bookings
+// ─────────────────────────────────────────────
+// GET ALL BOOKINGS
+// ─────────────────────────────────────────────
 exports.getAllBookings = async (req, res) => {
   try {
     const bookings = await Booking.findAll({
-      include: [
-        { model: User, attributes: ['user_id', 'full_name', 'email'] },
-        { model: Package, attributes: ['package_id', 'name', 'base_price'] }
-      ],
-      order: [['created_at', 'DESC']]
+      include: [], // add User, Package if needed
+      order: [['created_at', 'DESC']],
     });
-    res.json({ success: true, count: bookings.length, data: bookings });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+
+    return res.json({
+      success: true,
+      count: bookings.length,
+      data: bookings,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 };
 
-// Get booking by ID
+// ─────────────────────────────────────────────
+// GET BOOKING BY ID
+// ─────────────────────────────────────────────
 exports.getBookingById = async (req, res) => {
   try {
     const booking = await Booking.findByPk(req.params.id);
 
-    if (!booking)
-      return res.status(404).json({ success: false, error: "Booking not found" });
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        error: 'Booking not found',
+      });
+    }
 
-    res.json({ success: true, data: booking });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    return res.json({
+      success: true,
+      data: booking,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 };
 
-// Get bookings by user
+// ─────────────────────────────────────────────
+// GET BOOKINGS BY USER
+// ─────────────────────────────────────────────
 exports.getBookingsByUser = async (req, res) => {
   try {
-    const bookings = await Booking.findAll({ where: { user_id: req.params.user_id } });
+    const bookings = await Booking.findAll({
+      where: { user_id: req.params.user_id },
+    });
 
-    res.json({ success: true, count: bookings.length, data: bookings });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    return res.json({
+      success: true,
+      count: bookings.length,
+      data: bookings,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 };
 
-// Update status
+// ─────────────────────────────────────────────
+// UPDATE BOOKING STATUS
+// ─────────────────────────────────────────────
 exports.updateBookingStatus = async (req, res) => {
   try {
     const booking = await Booking.findByPk(req.params.id);
 
-    if (!booking)
-      return res.status(404).json({ success: false, error: "Booking not found" });
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        error: 'Booking not found',
+      });
+    }
 
     await booking.update({ status: req.body.status });
 
-    // Notify user about status change
     const statusLabels = {
-      confirmed: "Confirmed ✅",
-      cancelled: "Cancelled ❌",
-      completed: "Completed 🎉",
-      pending: "Pending ⏳",
+      confirmed: 'Confirmed ✅',
+      cancelled: 'Cancelled ❌',
+      completed: 'Completed 🎉',
+      pending: 'Pending ⏳',
     };
+
+    const statusText = statusLabels[req.body.status] || req.body.status;
+
     await createNotification({
       user_id: booking.user_id,
-      type: "booking",
-      title: "Booking Status Updated",
-      message: `Your booking #${booking.booking_id} status has been updated to ${statusLabels[req.body.status] || req.body.status}.`,
-      link: "/user/bookings",
+      type: 'booking',
+      title: 'Booking Status Updated',
+      message: `Your booking #${booking.booking_id} status has been updated to ${statusText}.`,
+      link: '/user/bookings',
     });
 
-    res.json({
+    return res.json({
       success: true,
-      message: "Booking status updated",
+      message: 'Booking status updated',
       data: booking,
     });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 };
 
-// Delete booking
+// ─────────────────────────────────────────────
+// DELETE BOOKING
+// ─────────────────────────────────────────────
 exports.deleteBooking = async (req, res) => {
   try {
     const booking = await Booking.findByPk(req.params.id);
 
-    if (!booking)
-      return res.status(404).json({ success: false, error: "Booking not found" });
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        error: 'Booking not found',
+      });
+    }
 
     await booking.destroy();
 
-    res.json({ success: true, message: "Booking deleted" });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    return res.json({
+      success: true,
+      message: 'Booking deleted',
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 };

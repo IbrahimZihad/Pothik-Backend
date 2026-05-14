@@ -1,10 +1,3 @@
-/**
- * Unit Tests for Review Controller
- * ===================================
- * Tests: createReview, getAllReviews, getReviewById,
- *        getReviewsByUser, getReviewsByService, updateReview, deleteReview
- */
-
 const reviewController = require('../controllers/review.controller');
 const { Review } = require('../models');
 
@@ -14,6 +7,7 @@ jest.mock('../models', () => ({
     findAll: jest.fn(),
     findByPk: jest.fn(),
   },
+  User: {},
 }));
 
 const mockRequest = (body = {}, params = {}) => ({ body, params });
@@ -25,23 +19,21 @@ const mockResponse = () => {
   return res;
 };
 
-describe('Review Controller', () => {
+describe('Review Controller (Updated Model)', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────
   // CREATE REVIEW
-  // ─────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────
   describe('createReview', () => {
-    it('should create review and return 201', async () => {
-      const review = { review_id: 1, rating: 5, comment: 'Great!' };
+    it('should create review successfully', async () => {
+      const review = { review_id: 1, user_id: 1, rating: 5, comment: 'Great!' };
       Review.create.mockResolvedValue(review);
 
       const req = mockRequest({
         user_id: 1,
-        service_type: 'hotel',
-        service_id: 2,
         rating: 5,
         comment: 'Great!',
       });
@@ -51,179 +43,264 @@ describe('Review Controller', () => {
 
       expect(Review.create).toHaveBeenCalledWith({
         user_id: 1,
-        service_type: 'hotel',
-        service_id: 2,
         rating: 5,
         comment: 'Great!',
       });
+
       expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-        success: true,
-        data: review,
-      }));
+    });
+
+    it('should handle missing fields', async () => {
+      Review.create.mockResolvedValue({});
+
+      const res = mockResponse();
+      await reviewController.createReview(mockRequest({}), res);
+
+      expect(res.status).toHaveBeenCalled();
     });
 
     it('should return 500 on error', async () => {
-      Review.create.mockRejectedValue(new Error('DB error'));
+      Review.create.mockRejectedValue(new Error());
 
-      const req = mockRequest({});
       const res = mockResponse();
-
-      await reviewController.createReview(req, res);
+      await reviewController.createReview(mockRequest({}), res);
 
       expect(res.status).toHaveBeenCalledWith(500);
     });
   });
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────
   // GET ALL REVIEWS
-  // ─────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────
   describe('getAllReviews', () => {
     it('should return all reviews', async () => {
-      const reviews = [{ review_id: 1 }, { review_id: 2 }];
+      const reviews = [
+        { review_id: 1, user_id: 1, rating: 5, comment: 'Great!', user: { full_name: 'Alice' } },
+        { review_id: 2, user_id: 2, rating: 4, comment: 'Good!',  user: { full_name: 'Bob' } },
+      ];
       Review.findAll.mockResolvedValue(reviews);
 
-      const req = mockRequest();
       const res = mockResponse();
+      await reviewController.getAllReviews(mockRequest(), res);
 
-      await reviewController.getAllReviews(req, res);
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        count: 2,
+        data: [
+          { review_id: 1, user_id: 1, user_name: 'Alice', rating: 5, comment: 'Great!' },
+          { review_id: 2, user_id: 2, user_name: 'Bob',   rating: 4, comment: 'Good!'  },
+        ],
+      });
+    });
 
-      expect(res.json).toHaveBeenCalledWith({ success: true, count: 2, data: reviews });
+    it('should handle empty reviews', async () => {
+      Review.findAll.mockResolvedValue([]);
+
+      const res = mockResponse();
+      await reviewController.getAllReviews(mockRequest(), res);
+
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ count: 0 })
+      );
     });
 
     it('should return 500 on error', async () => {
-      Review.findAll.mockRejectedValue(new Error('DB error'));
+      Review.findAll.mockRejectedValue(new Error());
 
-      const req = mockRequest();
       const res = mockResponse();
-
-      await reviewController.getAllReviews(req, res);
+      await reviewController.getAllReviews(mockRequest(), res);
 
       expect(res.status).toHaveBeenCalledWith(500);
     });
   });
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────
   // GET REVIEW BY ID
-  // ─────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────
   describe('getReviewById', () => {
-    it('should return review by id', async () => {
-      const review = { review_id: 1 };
+    it('should return review', async () => {
+      const review = {
+        review_id: 1,
+        user_id: 1,
+        rating: 5,
+        comment: 'Great!',
+        user: { full_name: 'Alice' },
+      };
       Review.findByPk.mockResolvedValue(review);
 
-      const req = mockRequest({}, { id: 1 });
       const res = mockResponse();
+      await reviewController.getReviewById(mockRequest({}, { id: 1 }), res);
 
-      await reviewController.getReviewById(req, res);
-
-      expect(res.json).toHaveBeenCalledWith({ success: true, data: review });
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        data: {
+          review_id: 1,
+          user_id: 1,
+          user_name: 'Alice',
+          rating: 5,
+          comment: 'Great!',
+        },
+      });
     });
 
     it('should return 404 if not found', async () => {
       Review.findByPk.mockResolvedValue(null);
 
-      const req = mockRequest({}, { id: 999 });
       const res = mockResponse();
-
-      await reviewController.getReviewById(req, res);
+      await reviewController.getReviewById(mockRequest({}, { id: 99 }), res);
 
       expect(res.status).toHaveBeenCalledWith(404);
     });
-  });
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // GET REVIEWS BY USER
-  // ─────────────────────────────────────────────────────────────────────────
-  describe('getReviewsByUser', () => {
-    it('should return reviews for a user', async () => {
-      const reviews = [{ review_id: 1 }];
-      Review.findAll.mockResolvedValue(reviews);
+    it('should return 500 on error', async () => {
+      Review.findByPk.mockRejectedValue(new Error());
 
-      const req = mockRequest({}, { user_id: 5 });
       const res = mockResponse();
+      await reviewController.getReviewById(mockRequest({}, { id: 1 }), res);
 
-      await reviewController.getReviewsByUser(req, res);
-
-      expect(Review.findAll).toHaveBeenCalledWith({ where: { user_id: 5 } });
-      expect(res.json).toHaveBeenCalledWith({ success: true, count: 1, data: reviews });
+      expect(res.status).toHaveBeenCalledWith(500);
     });
   });
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // GET REVIEWS BY SERVICE
-  // ─────────────────────────────────────────────────────────────────────────
-  describe('getReviewsByService', () => {
-    it('should return reviews for a service', async () => {
-      const reviews = [{ review_id: 1 }];
+  // ─────────────────────────────────────────
+  // GET REVIEWS BY USER
+  // ─────────────────────────────────────────
+  describe('getReviewsByUser', () => {
+    it('should return user reviews', async () => {
+      const reviews = [
+        { review_id: 1, user_id: 1, rating: 5, comment: 'Great!', user: { full_name: 'Alice' } },
+      ];
       Review.findAll.mockResolvedValue(reviews);
 
-      const req = mockRequest({}, { service_type: 'hotel', service_id: 2 });
       const res = mockResponse();
-
-      await reviewController.getReviewsByService(req, res);
+      await reviewController.getReviewsByUser(
+        mockRequest({}, { user_id: 1 }),
+        res
+      );
 
       expect(Review.findAll).toHaveBeenCalledWith({
-        where: { service_type: 'hotel', service_id: 2 },
+        where: { user_id: 1 },
+        include: [{ model: {}, as: 'user', attributes: ['user_id', 'full_name'] }],
+        order: [['created_at', 'DESC']],
       });
-      expect(res.json).toHaveBeenCalledWith({ success: true, count: 1, data: reviews });
+
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        count: 1,
+        data: [
+          { review_id: 1, user_id: 1, user_name: 'Alice', rating: 5, comment: 'Great!' },
+        ],
+      });
+    });
+
+    it('should return 500 on error', async () => {
+      Review.findAll.mockRejectedValue(new Error());
+
+      const res = mockResponse();
+      await reviewController.getReviewsByUser(
+        mockRequest({}, { user_id: 1 }),
+        res
+      );
+
+      expect(res.status).toHaveBeenCalledWith(500);
     });
   });
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────
   // UPDATE REVIEW
-  // ─────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────
   describe('updateReview', () => {
-    it('should update review successfully', async () => {
-      const review = { review_id: 1, update: jest.fn().mockResolvedValue(true) };
+    it('should update review', async () => {
+      const review = {
+        update: jest.fn().mockResolvedValue(true),
+      };
       Review.findByPk.mockResolvedValue(review);
 
-      const req = mockRequest({ rating: 4, comment: 'Updated' }, { id: 1 });
       const res = mockResponse();
+      await reviewController.updateReview(
+        mockRequest({ rating: 4, comment: 'Updated' }, { id: 1 }),
+        res
+      );
 
-      await reviewController.updateReview(req, res);
+      expect(review.update).toHaveBeenCalledWith({
+        rating: 4,
+        comment: 'Updated',
+      });
 
-      expect(review.update).toHaveBeenCalledWith({ rating: 4, comment: 'Updated' });
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+      expect(res.json).toHaveBeenCalled();
     });
 
-    it('should return 404 if not found', async () => {
+    it('should return 404', async () => {
       Review.findByPk.mockResolvedValue(null);
 
-      const req = mockRequest({}, { id: 999 });
       const res = mockResponse();
-
-      await reviewController.updateReview(req, res);
+      await reviewController.updateReview(
+        mockRequest({}, { id: 1 }),
+        res
+      );
 
       expect(res.status).toHaveBeenCalledWith(404);
     });
+
+    it('should return 500 on error', async () => {
+      Review.findByPk.mockRejectedValue(new Error());
+
+      const res = mockResponse();
+      await reviewController.updateReview(
+        mockRequest({}, { id: 1 }),
+        res
+      );
+
+      expect(res.status).toHaveBeenCalledWith(500);
+    });
   });
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────
   // DELETE REVIEW
-  // ─────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────
   describe('deleteReview', () => {
-    it('should delete review successfully', async () => {
-      const review = { review_id: 1, destroy: jest.fn().mockResolvedValue(true) };
+    it('should delete review', async () => {
+      const review = {
+        destroy: jest.fn().mockResolvedValue(true),
+      };
       Review.findByPk.mockResolvedValue(review);
 
-      const req = mockRequest({}, { id: 1 });
       const res = mockResponse();
-
-      await reviewController.deleteReview(req, res);
+      await reviewController.deleteReview(
+        mockRequest({}, { id: 1 }),
+        res
+      );
 
       expect(review.destroy).toHaveBeenCalled();
-      expect(res.json).toHaveBeenCalledWith({ success: true, message: 'Review deleted successfully' });
+
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        message: 'Review deleted successfully',
+      });
     });
 
-    it('should return 404 if not found', async () => {
+    it('should return 404', async () => {
       Review.findByPk.mockResolvedValue(null);
 
-      const req = mockRequest({}, { id: 999 });
       const res = mockResponse();
-
-      await reviewController.deleteReview(req, res);
+      await reviewController.deleteReview(
+        mockRequest({}, { id: 1 }),
+        res
+      );
 
       expect(res.status).toHaveBeenCalledWith(404);
+    });
+
+    it('should return 500 on error', async () => {
+      Review.findByPk.mockRejectedValue(new Error());
+
+      const res = mockResponse();
+      await reviewController.deleteReview(
+        mockRequest({}, { id: 1 }),
+        res
+      );
+
+      expect(res.status).toHaveBeenCalledWith(500);
     });
   });
 });

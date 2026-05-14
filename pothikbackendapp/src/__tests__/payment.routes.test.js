@@ -1,7 +1,25 @@
 const request = require('supertest');
 const express = require('express');
 
-// Mock controller
+// Mock sslcommerz-lts before any require that loads payment.controller
+jest.mock('sslcommerz-lts', () => {
+  return jest.fn().mockImplementation(() => ({
+    init: jest.fn().mockResolvedValue({ GatewayPageURL: null }),
+  }));
+});
+
+jest.mock('../config', () => ({
+  SSLCOMMERZ_STORE_ID: '',
+  SSLCOMMERZ_STORE_PASSWORD: '',
+  SSLCOMMERZ_IS_LIVE: false,
+  SSLCOMMERZ_SUCCESS_URL: 'http://localhost/success',
+  SSLCOMMERZ_FAIL_URL: 'http://localhost/fail',
+  SSLCOMMERZ_CANCEL_URL: 'http://localhost/cancel',
+  SSLCOMMERZ_IPN_URL: 'http://localhost/ipn',
+  POTHIK_FRONTEND_URL: 'http://localhost:3000',
+}));
+
+// Mock controller so routes load with real handler functions
 jest.mock('../controllers/payment.controller', () => ({
   createPayment: jest.fn((req, res) =>
     res.status(201).json({ message: 'Payment created', payment: req.body })
@@ -21,6 +39,18 @@ jest.mock('../controllers/payment.controller', () => ({
   deletePayment: jest.fn((req, res) =>
     res.status(200).json({ message: 'Payment deleted', id: req.params.id })
   ),
+  initiateSslCommerzPayment: jest.fn((req, res) =>
+    res.status(200).json({ message: 'SSLCommerz initiated' })
+  ),
+  sslCommerzSuccess: jest.fn((req, res) =>
+    res.status(200).json({ message: 'Success' })
+  ),
+  sslCommerzFail: jest.fn((req, res) =>
+    res.status(200).json({ message: 'Fail' })
+  ),
+  sslCommerzCancel: jest.fn((req, res) =>
+    res.status(200).json({ message: 'Cancel' })
+  ),
 }));
 
 const routes = require('../routes/payments.routes');
@@ -33,13 +63,10 @@ app.use('/payments', routes);
 describe('Payment Routes', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  // ─── Create Payment ───────────────────────────────────────────
   describe('POST /payments', () => {
     it('should create a new payment', async () => {
       const paymentData = { bookingId: 'booking-1', amount: 500, method: 'card' };
-      const res = await request(app)
-        .post('/payments')
-        .send(paymentData);
+      const res = await request(app).post('/payments').send(paymentData);
 
       expect(res.statusCode).toBe(201);
       expect(res.body).toHaveProperty('message', 'Payment created');
@@ -48,7 +75,6 @@ describe('Payment Routes', () => {
     });
   });
 
-  // ─── Get All Payments ─────────────────────────────────────────
   describe('GET /payments', () => {
     it('should return all payments', async () => {
       const res = await request(app).get('/payments');
@@ -60,7 +86,6 @@ describe('Payment Routes', () => {
     });
   });
 
-  // ─── Get Payment By ID ────────────────────────────────────────
   describe('GET /payments/:id', () => {
     it('should return a payment by ID', async () => {
       const res = await request(app).get('/payments/pay-123');
@@ -72,7 +97,6 @@ describe('Payment Routes', () => {
     });
   });
 
-  // ─── Get Payments By Booking ──────────────────────────────────
   describe('GET /payments/booking/:booking_id', () => {
     it('should return payments for a booking', async () => {
       const res = await request(app).get('/payments/booking/booking-1');
@@ -84,7 +108,6 @@ describe('Payment Routes', () => {
     });
   });
 
-  // ─── Update Payment Status ────────────────────────────────────
   describe('PUT /payments/:id/status', () => {
     it('should update the status of a payment', async () => {
       const res = await request(app)
@@ -99,7 +122,6 @@ describe('Payment Routes', () => {
     });
   });
 
-  // ─── Delete Payment ───────────────────────────────────────────
   describe('DELETE /payments/:id', () => {
     it('should delete a payment by ID', async () => {
       const res = await request(app).delete('/payments/pay-123');
