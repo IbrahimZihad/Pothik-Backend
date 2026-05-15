@@ -2,7 +2,6 @@ const express = require('express');
 const routes = require('./routes');
 const app = express();
 const cors = require('cors');
-
 const morgan = require('morgan');
 const fs = require('fs');
 const path = require('path');
@@ -17,17 +16,26 @@ if (!fs.existsSync(uploadDir)) {
     console.log('✅ Upload directory exists at:', uploadDir);
 }
 
-app.use([cors({
-    origin: [
-    "http://localhost:5173",
-    "https://pothik-six.vercel.app"
-  ],  //  frontend URL
-    credentials: true
-}), express.json()]);
+// ✅ CORS must be first, separate from other middleware
+app.use(cors({
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      "http://localhost:5173",
+      "https://pothik-six.vercel.app",
+    ];
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
+}));
 
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ Serve uploaded files statically with absolute path
+// ✅ Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // API Routes
@@ -41,14 +49,13 @@ app.get('/', (req, res) => {
         endpoints: {
             register: 'POST /api/auth/register',
             login: 'POST /api/auth/login',
-
             verify: 'GET /api/auth/verify',
             createBlog: 'POST /api/blog/blogs'
         }
     });
 });
 
-// Error handling middleware (must be after all routes)
+// Error handling middleware
 app.use(errorHandler);
 
 module.exports = app;
