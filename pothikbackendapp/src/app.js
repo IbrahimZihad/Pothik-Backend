@@ -18,7 +18,10 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 app.use([cors({
-    origin: 'http://localhost:5173',  //  frontend URL
+    origin: [
+    "http://localhost:5173",
+    "https://pothik-frontend.vercel.app"
+  ],  //  frontend URL
     credentials: true
 }), express.json()]);
 
