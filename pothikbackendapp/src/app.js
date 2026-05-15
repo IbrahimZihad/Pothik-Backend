@@ -20,7 +20,7 @@ if (!fs.existsSync(uploadDir)) {
 app.use([cors({
     origin: [
     "http://localhost:5173",
-    "https://pothik-frontend.vercel.app"
+    "https://pothik-hf1p0bj79-md-ibrahim-zihad-s-projects.vercel.app"
   ],  //  frontend URL
     credentials: true
 }), express.json()]);
