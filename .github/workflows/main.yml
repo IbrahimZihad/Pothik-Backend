@@ -2,20 +2,24 @@ name: Backend CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   test:
-
     runs-on: ubuntu-latest
 
-    steps:
+    env:
+      NODE_ENV: test
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_PORT: ${{ secrets.DB_PORT }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_NAME: ${{ secrets.DB_NAME }}
 
+    steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
