@@ -21,3 +21,4 @@ router.post('/forgot-password', authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
 
 module.exports = router;
+//check Continuous Integration (CI) and Continuous Deployment (CD) pipelines for this file to ensure that all tests pass and that the code is properly deployed to the staging or production environment.   
