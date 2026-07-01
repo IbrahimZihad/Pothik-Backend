@@ -2,9 +2,9 @@ const { Booking } = require('../models');
 const BookingService = require('../services/booking.service');
 const { createNotification } = require('../controllers/notification.controller');
 
-// ─────────────────────────────────────────────
+
 // CREATE BOOKING
-// ─────────────────────────────────────────────
+
 exports.createBooking = async (req, res) => {
   try {
     const booking = await BookingService.createBooking(req.body);
@@ -30,9 +30,9 @@ exports.createBooking = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────────
+
 // GET ALL BOOKINGS
-// ─────────────────────────────────────────────
+
 exports.getAllBookings = async (req, res) => {
   try {
     const bookings = await Booking.findAll({
@@ -53,9 +53,9 @@ exports.getAllBookings = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────────
+
 // GET BOOKING BY ID
-// ─────────────────────────────────────────────
+
 exports.getBookingById = async (req, res) => {
   try {
     const booking = await Booking.findByPk(req.params.id);
@@ -79,9 +79,9 @@ exports.getBookingById = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────────
+
 // GET BOOKINGS BY USER
-// ─────────────────────────────────────────────
+
 exports.getBookingsByUser = async (req, res) => {
   try {
     const bookings = await Booking.findAll({
@@ -101,9 +101,9 @@ exports.getBookingsByUser = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────────
+
 // UPDATE BOOKING STATUS
-// ─────────────────────────────────────────────
+
 exports.updateBookingStatus = async (req, res) => {
   try {
     const booking = await Booking.findByPk(req.params.id);
@@ -115,7 +115,24 @@ exports.updateBookingStatus = async (req, res) => {
       });
     }
 
-    await booking.update({ status: req.body.status });
+    const newStatus = req.body.status;
+    await booking.update({ status: newStatus });
+
+    // ── Also update associated payment status ──
+    const { Payment } = require('../models');
+    if (newStatus === 'confirmed') {
+      // When admin confirms booking, mark all pending payments as paid
+      await Payment.update(
+        { status: 'paid' },
+        { where: { booking_id: booking.booking_id, status: 'pending' } }
+      );
+    } else if (newStatus === 'cancelled') {
+      // When admin cancels booking, mark pending payments as cancelled
+      await Payment.update(
+        { status: 'cancelled' },
+        { where: { booking_id: booking.booking_id, status: 'pending' } }
+      );
+    }
 
     const statusLabels = {
       confirmed: 'Confirmed ✅',
@@ -124,7 +141,7 @@ exports.updateBookingStatus = async (req, res) => {
       pending: 'Pending ⏳',
     };
 
-    const statusText = statusLabels[req.body.status] || req.body.status;
+    const statusText = statusLabels[newStatus] || newStatus;
 
     await createNotification({
       user_id: booking.user_id,
@@ -133,6 +150,17 @@ exports.updateBookingStatus = async (req, res) => {
       message: `Your booking #${booking.booking_id} status has been updated to ${statusText}.`,
       link: '/user/bookings',
     });
+
+    // Send payment notification if status changed to confirmed
+    if (newStatus === 'confirmed') {
+      await createNotification({
+        user_id: booking.user_id,
+        type: 'payment',
+        title: 'Payment Confirmed',
+        message: `Payment for booking #${booking.booking_id} has been confirmed.`,
+        link: '/user/payouts',
+      });
+    }
 
     return res.json({
       success: true,
@@ -147,9 +175,9 @@ exports.updateBookingStatus = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────────
+
 // DELETE BOOKING
-// ─────────────────────────────────────────────
+
 exports.deleteBooking = async (req, res) => {
   try {
     const booking = await Booking.findByPk(req.params.id);
