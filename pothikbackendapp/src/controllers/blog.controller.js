@@ -22,11 +22,7 @@ exports.createBlog = async (req, res) => {
       });
     }
 
-    // Prefer an uploaded file's path; otherwise fall back to an image URL
-    // sent directly in the JSON body (e.g. from the "cover image URL" form).
-    const imagePath = req.file
-      ? req.file.path.replace(/\\/g, "/")
-      : req.body.image || null;
+    const imagePath = req.file ? req.file.path.replace(/\\/g, "/") : null;
 
     const blog = await Blog.create({
       user_id,
@@ -157,13 +153,9 @@ exports.updateBlog = async (req, res) => {
       content: req.body.content || blog.content,
     };
 
-    // If a new file was uploaded, use its path. Otherwise, if an image URL
-    // was sent in the JSON body, use that instead. If neither is present,
-    // leave the existing image untouched.
+    // If image is uploaded, replace it
     if (req.file) {
       updatedFields.image = req.file.path.replace(/\\/g, "/");
-    } else if (req.body.image) {
-      updatedFields.image = req.body.image;
     }
 
     // Update the blog
