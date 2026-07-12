@@ -90,58 +90,53 @@ class BookingService {
       package_id,
       session_id,
       total_price,
-      coupon_code,
+      coupon_id,
+      coupon_discount,
       loyalty_points_used,
+      // Accept all extra fields from frontend
+      travel_date,
+      num_travelers,
+      adults,
+      children,
+      paid_amount,
+      payment_type,
+      special_requests,
+      emergency_contact,
+      traveler_details,
     } = data;
 
     const user = await User.findByPk(user_id);
     if (!user) throw new Error("User not found");
 
-    // 1️⃣ Apply coupon
-    const { discount, coupon } = await BookingService.applyCoupon(
-      coupon_code,
-      total_price
-    );
+    // Frontend already calculated pricing (coupon + loyalty).
+    // We just store the booking record. Loyalty deduction is handled
+    // by the frontend calling /loyalty/deduct separately.
+    // Loyalty EARNING happens in markAsPaid after payment succeeds.
 
-    // 2️⃣ Cap loyalty points to remaining cost after coupon
-    const priceAfterCoupon = total_price - discount;
-    const cappedPoints = Math.min(
-      loyalty_points_used || 0,
-      Math.max(priceAfterCoupon, 0)
-    );
+    const discounted_price = total_price;
 
-    // 3️⃣ Apply loyalty points
-    const loyalty = await BookingService.useLoyaltyPoints(user, cappedPoints);
-
-    // 4️⃣ Final price calculation
-    const discounted_price = priceAfterCoupon - (loyalty.deducted || 0);
-    const amountPaid = discounted_price < 0 ? 0 : discounted_price;
-
-    // 4️⃣ Earn new loyalty points
-    const earnedPoints = await BookingService.earnLoyaltyPoints(
-      user,
-      amountPaid
-    );
-
-    // 5️⃣ Increase coupon usage
-    if (coupon) {
-      coupon.used_count += 1;
-      await coupon.save();
-    }
-
-    // 6️⃣ Create booking
+    // Create booking (no points earned yet — awarded after payment)
     const booking = await Booking.create({
       user_id,
-      package_type,
+      package_type: package_type || "prebuilt",
       package_id,
       session_id,
       total_price,
-      coupon_id: coupon?.coupon_id || null,
-      coupon_discount: discount,
-      loyalty_points_used: loyalty.deducted || 0,
-      loyalty_points_earned: earnedPoints,
-      discounted_price: amountPaid,
+      coupon_id: coupon_id || null,
+      coupon_discount: coupon_discount || 0,
+      loyalty_points_used: loyalty_points_used || 0,
+      loyalty_points_earned: 0, // will be set after payment success
+      discounted_price,
       status: "pending",
+      travel_date,
+      num_travelers,
+      adults,
+      children,
+      paid_amount,
+      payment_type,
+      special_requests,
+      emergency_contact,
+      traveler_details,
     });
 
     return booking;

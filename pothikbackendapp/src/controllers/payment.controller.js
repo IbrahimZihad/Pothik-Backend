@@ -106,6 +106,49 @@ const markAsPaid = async ({ payment, payload, validation }) => {
 
   await updateBookingIfExists(payment.booking_id, 'confirmed');
 
+  // ── Award loyalty points after successful payment ──
+  try {
+    const { User, LoyaltyHistory } = require('../models');
+    const booking = await Booking.findByPk(payment.booking_id);
+    if (booking && booking.user_id) {
+      const user = await User.findByPk(booking.user_id);
+      if (user) {
+        // 1 point per 100 taka paid
+        const pointsEarned = Math.floor(paymentAmount / 100);
+        if (pointsEarned > 0) {
+          user.loyalty_points = (user.loyalty_points || 0) + pointsEarned;
+          await user.save();
+
+          await LoyaltyHistory.create({
+            user_id: user.user_id,
+            points_added: pointsEarned,
+            description: `Earned from payment for booking #${payment.booking_id}`,
+          });
+
+          // Update booking record with earned points
+          await booking.update({ loyalty_points_earned: pointsEarned });
+
+          // Send loyalty notification
+          try {
+            const { createNotification } = require('./notification.controller');
+            await createNotification({
+              user_id: user.user_id,
+              type: 'loyalty',
+              title: 'Loyalty Points Earned! ⭐',
+              message: `You earned ${pointsEarned} loyalty points from your payment of ৳${paymentAmount}. Your balance is now ${user.loyalty_points} points.`,
+              link: '/user/loyalty',
+            });
+          } catch (notifErr) {
+            console.error('Loyalty notification failed:', notifErr.message);
+          }
+        }
+      }
+    }
+  } catch (loyaltyErr) {
+    console.error('Loyalty point earning failed:', loyaltyErr.message);
+    // Don't fail the payment if loyalty fails
+  }
+
   return payment;
 };
 
