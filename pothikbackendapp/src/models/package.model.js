@@ -27,6 +27,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: true,
       },
+      capacity: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
       image: {
         type: DataTypes.STRING,
         allowNull: true,

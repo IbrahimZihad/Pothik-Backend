@@ -10,6 +10,7 @@ exports.createPackage = async (req, res) => {
       description,
       duration_days,
       base_price,
+      capacity,
       image,
       is_active,
       Start_Date
@@ -21,6 +22,7 @@ exports.createPackage = async (req, res) => {
       description,
       duration_days,
       base_price,
+      capacity,
       image,
       is_active,
       Start_Date
