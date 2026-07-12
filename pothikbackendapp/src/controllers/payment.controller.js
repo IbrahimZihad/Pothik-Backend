@@ -24,6 +24,17 @@ const jsonOrNull = (data) => {
   }
 };
 
+// Races a promise against a timeout so slow/hanging external calls (like the
+// SSLCommerz gateway) fail fast with a clear error instead of hanging long
+// enough for Render's proxy to give up and return an opaque 502.
+const withTimeout = (promise, ms, label) =>
+  Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)
+    ),
+  ]);
+
 const getPayload = (req) => ({
   ...(req.query || {}),
   ...(req.body || {}),
@@ -68,7 +79,7 @@ const validateSslTransaction = async (valId) => {
   url.searchParams.set('v', '1');
   url.searchParams.set('format', 'json');
 
-  const response = await fetch(url, { method: 'GET' });
+  const response = await withTimeout(fetch(url, { method: 'GET' }), 15000, 'SSLCommerz validation');
   if (!response.ok) {
     throw new Error(`Validation API failed with HTTP ${response.status}`);
   }
@@ -234,7 +245,21 @@ exports.initiateSslCommerzPayment = async (req, res) => {
       value_b: String(payment.payment_id),
     };
 
-    const apiResponse = await sslcz.init(paymentRequest);
+    let apiResponse;
+    try {
+      apiResponse = await withTimeout(sslcz.init(paymentRequest), 15000, 'SSLCommerz init');
+    } catch (timeoutOrGatewayErr) {
+      await payment.update({
+        status: 'failed',
+        gateway_response: jsonOrNull({ error: timeoutOrGatewayErr.message }),
+      });
+
+      return res.status(502).json({
+        success: false,
+        error: 'SSLCommerz gateway did not respond in time',
+        details: timeoutOrGatewayErr.message,
+      });
+    }
 
     if (!apiResponse?.GatewayPageURL) {
       await payment.update({
